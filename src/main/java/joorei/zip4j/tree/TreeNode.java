@@ -8,10 +8,18 @@ import java.util.Objects;
 import net.lingala.zip4j.model.FileHeader;
 
 /**
- *  A node potentially connected to child nodes of the same type carrying a
- * {@link FileHeader} instance as payload.
+ * A node potentially connected to child nodes of the same type carrying a
+ * {@link FileHeader} instance as {@link #payload}.
  * <p>
- * This implementation is mutable. Children can be changed at any time.
+ * There is no special class for leaf nodes. Those are just normal nodes with no
+ * children set.
+ * <p>
+ * While a non-leaf nodes containing a {@link #payload} with the
+ * {@link FileHeader#isDirectory()} flag not set (indicating a file) are not
+ * valid this class implementation will not prevent creating such instance.
+ * <p>
+ * This implementation is mutable. Children are exposed to the outside and can
+ * be changed at any time.
  */
 class TreeNode {
 	/**
