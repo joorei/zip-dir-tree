@@ -21,14 +21,14 @@ final class NodeMapping {
 	private final Map<String, TreeNode> nodes;
 	/**
 	 * The key of the value currently stored in the cache. Kept in sync with
-	 * {@link #value}.
+	 * {@link #cachedValue}.
 	 */
-	private String currentKey;
+	private String cachedKey;
 	/**
 	 * The value currently stored in the cache. Kept in sync with
-	 * {@link #currentKey}.
+	 * {@link #cachedKey}.
 	 */
-	private TreeNode value;
+	private TreeNode cachedValue;
 
 	/**
 	 * Builds a mapping between the string identifier of directory entries and new
@@ -80,9 +80,10 @@ final class NodeMapping {
 	}
 
 	/**
-	 * This method will always access the cache first to check if the current key is
-	 * the same as the one used on the previous access (when caching was allowed).
-	 * Using the cache resulted in a (slight but measurable) performance improvement.
+	 * This method will always access the cache first to check if the
+	 * {@link #cachedKey} is the same as the one used on the previous access (when
+	 * caching was allowed). Using the cache resulted in a (slight but measurable)
+	 * performance improvement.
 	 * 
 	 * 
 	 * @param key          The key to search for.
@@ -121,12 +122,12 @@ final class NodeMapping {
 	}
 	
 	/**
-	 * @param newKey  Will be set as {@link #currentKey}.
-	 * @param newNode Will be set as {@link #value}.
+	 * @param newKey  Will be set as {@link #cachedKey}.
+	 * @param newNode Will be set as {@link #cachedValue}.
 	 */
 	protected void updateCache(final String newKey, final TreeNode newNode) {
-		this.value = Objects.requireNonNull(newNode);
-		this.currentKey = Objects.requireNonNull(newKey);
+		this.cachedValue = Objects.requireNonNull(newNode);
+		this.cachedKey = Objects.requireNonNull(newKey);
 	}
 
 	/**
@@ -135,9 +136,9 @@ final class NodeMapping {
 	 * @throws NullPointerException Thrown if the given key is <code>null</code>.
 	 */
 	protected TreeNode getCacheValue(final String key) throws NullPointerException {
-		final String theCurrentKey = this.currentKey;
+		final String theCurrentKey = this.cachedKey;
 		if (key.equals(theCurrentKey)) {
-			return this.value;
+			return this.cachedValue;
 		}
 		return null;
 	}
