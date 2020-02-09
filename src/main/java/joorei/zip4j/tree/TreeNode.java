@@ -64,9 +64,6 @@ class TreeNode {
 	 *         the {@link List} nor its elements can be <code>null</code>.
 	 */
 	public List<? extends TreeNode> getChildren() {
-		if (this.children == null) {
-			return Collections.emptyList();
-		}
-		return this.children;
+		return this.children == null ? Collections.emptyList() : this.children;
 	}
 }
