@@ -208,8 +208,7 @@ public class TreeBuilderTest {
 	}
 	
 	protected static void checkAssumption(final TreeNode node, final boolean isDir, final String name, final int childrenCount) {
-		assertTrue(isDir == node.getPayload().isDirectory());
-		assertEquals(name, node.getPayload().getFileName());
+		checkAssumption(node.getPayload(), isDir, name);
 		assertEquals(childrenCount, node.getChildren().size());
 	}
 }
