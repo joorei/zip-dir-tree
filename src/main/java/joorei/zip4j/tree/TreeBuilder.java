@@ -121,9 +121,12 @@ public final class TreeBuilder {
 	 *                   {@link FileHeader#getFileName()}.
 	 * @return The node the given {@link FileHeader} is now wrapped in. Provides
 	 *         access to its currently known parent and children.
-	 * @throws NullPointerException Thrown if the given {@link FileHeader} is a
-	 *                              directory but was not found in
-	 *                              {@link #nodeMapping}.
+	 * @throws NullPointerException Thrown in case of unexpected <code>null</code>
+	 *                              values, eg. when the given {@link FileHeader}
+	 *                              parameter or its {@link FileHeader#getFileName}
+	 *                              method returns <code>null</code>, but also if
+	 *                              the {@link FileHeader} is a directory but was
+	 *                              not found in {@link #nodeMapping}.
 	 */
 	protected TreeNode addSingle(final FileHeader fileHeader) throws NullPointerException {
 		Objects.requireNonNull(fileHeader);

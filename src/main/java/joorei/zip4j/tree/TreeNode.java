@@ -37,7 +37,8 @@ class TreeNode {
 	}
 
 	/**
-	 * @param thePayload The payload to set as {@link #payload}.
+	 * @param thePayload The payload to set as {@link #payload}. Must not be
+	 *                   <code>null</code>.
 	 */
 	public TreeNode(final FileHeader thePayload) {
 		this.payload = Objects.requireNonNull(thePayload);
