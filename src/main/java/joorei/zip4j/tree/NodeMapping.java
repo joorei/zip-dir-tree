@@ -136,10 +136,6 @@ final class NodeMapping {
 	 * @throws NullPointerException Thrown if the given key is <code>null</code>.
 	 */
 	protected TreeNode getCacheValue(final String key) throws NullPointerException {
-		final String theCurrentKey = this.cachedKey;
-		if (key.equals(theCurrentKey)) {
-			return this.cachedValue;
-		}
-		return null;
+		return key.equals(this.cachedKey) ? this.cachedValue : null;
 	}
 }
