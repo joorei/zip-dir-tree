@@ -21,7 +21,7 @@ import net.lingala.zip4j.model.FileHeader;
  * This implementation is mutable. Children are exposed to the outside and can
  * be changed at any time.
  */
-class TreeNode {
+public class TreeNode {
 	/**
 	 * The content wrapped by this node. Never <code>null</code> as it is set on initialization.
 	 */
