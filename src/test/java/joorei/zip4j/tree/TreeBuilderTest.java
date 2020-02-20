@@ -124,14 +124,22 @@ public class TreeBuilderTest {
 		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
 		final List<? extends TreeNode> rootNodes = TreeBuilder.createTreeFrom(fileHeaders);
 		assertEquals(5, rootNodes.size());
-		checkAssumption(rootNodes.get(0), true, ZipTestFileCreator.DIR_D1, 3);
-		checkAssumption(rootNodes.get(1), false, ZipTestFileCreator.FILE_F1, 0);
-		checkAssumption(rootNodes.get(2), false, ZipTestFileCreator.FILE_F2, 0);
-		checkAssumption(rootNodes.get(3), false, ZipTestFileCreator.FILE_F5, 0);
-		checkAssumption(rootNodes.get(4), false, ZipTestFileCreator.FILE_F6, 0);
-		checkAssumption(rootNodes.get(0).getChildren().get(0), false, ZipTestFileCreator.FILE_F0, 0);
-		checkAssumption(rootNodes.get(0).getChildren().get(1), false, ZipTestFileCreator.FILE_F3, 0);
-		checkAssumption(rootNodes.get(0).getChildren().get(2), false, ZipTestFileCreator.FILE_F4, 0);
+		final TreeNode d1 = rootNodes.get(0);
+		final TreeNode f0 = d1.getChildren().get(0);
+		final TreeNode f1 = rootNodes.get(1);
+		final TreeNode f2 = rootNodes.get(2);
+		final TreeNode f3 = d1.getChildren().get(1);
+		final TreeNode f4 = d1.getChildren().get(2);
+		final TreeNode f5 = rootNodes.get(3);
+		final TreeNode f6 = rootNodes.get(4);
+		checkAssumption(d1, true, ZipTestFileCreator.DIR_D1, 3, null);
+		checkAssumption(f0, false, ZipTestFileCreator.FILE_F0, 0, d1);
+		checkAssumption(f1, false, ZipTestFileCreator.FILE_F1, 0, null);
+		checkAssumption(f2, false, ZipTestFileCreator.FILE_F2, 0, null);
+		checkAssumption(f3, false, ZipTestFileCreator.FILE_F3, 0, d1);
+		checkAssumption(f4, false, ZipTestFileCreator.FILE_F4, 0, d1);
+		checkAssumption(f5, false, ZipTestFileCreator.FILE_F5, 0, null);
+		checkAssumption(f6, false, ZipTestFileCreator.FILE_F6, 0, null);
 	}
 
 	/**
@@ -207,8 +215,9 @@ public class TreeBuilderTest {
 		assertEquals(name, fileHeader.getFileName());
 	}
 	
-	protected static void checkAssumption(final TreeNode node, final boolean isDir, final String name, final int childrenCount) {
+	protected static void checkAssumption(final TreeNode node, final boolean isDir, final String name, final int childrenCount, final TreeNode parent) {
 		checkAssumption(node.getPayload(), isDir, name);
 		assertEquals(childrenCount, node.getChildren().size());
+		assertSame(parent, node.getParent());
 	}
 }

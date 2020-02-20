@@ -182,6 +182,14 @@ public final class TreeBuilder {
 			if (foundParent != null) {
 				final TreeNode child = getOrCreateNode(fileHeader, originalEntryName);
 				foundParent.addChild(child);
+				if (child.getParent() == null) {
+					child.setParent(foundParent);
+				} else {
+					// As the ZIP directory structure is a tree we expect to find at maximum one parent
+					// for each node. If the parent of a child is already set this would mean we found
+					// a second parent at this point.
+					throw new IllegalStateException("Multiple parents for a single node found; should not be possible in a tree.");
+				}
 				return child;
 			}
 			/*

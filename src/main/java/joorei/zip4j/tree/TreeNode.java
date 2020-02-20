@@ -8,22 +8,23 @@ import java.util.Objects;
 import net.lingala.zip4j.model.FileHeader;
 
 /**
- * A node potentially connected to child nodes of the same type carrying a
- * {@link FileHeader} instance as {@link #payload}.
+ * A node potentially connected to child nodes and a parent node of the same
+ * type. Carryies a {@link FileHeader} instance as {@link #payload}.
  * <p>
  * There is no special class for leaf nodes. Those are just normal nodes with no
  * children set.
  * <p>
- * While a non-leaf nodes containing a {@link #payload} with the
+ * While non-leaf nodes containing a {@link #payload} with the
  * {@link FileHeader#isDirectory()} flag not set (indicating a file) are not
  * valid this class implementation will not prevent creating such instance.
  * <p>
- * This implementation is mutable. Children are exposed to the outside and can
- * be changed at any time.
+ * This implementation is mutable. {@link #children}, {@link #payload} and
+ * {@link #parent} are exposed to the outside and can be changed at any time.
  */
 public class TreeNode {
 	/**
-	 * The content wrapped by this node. Never <code>null</code> as it is set on initialization.
+	 * The content wrapped by this node. Never <code>null</code> as it is set on
+	 * initialization.
 	 */
 	private final FileHeader payload;
 
@@ -34,7 +35,14 @@ public class TreeNode {
 	private List<TreeNode> children = null;
 
 	/**
-	 * @param childNode The child to add to {@link #children}. Must not be <code>null</code>.
+	 * The parent node of this node. Will be <code>null</code> if no parent was
+	 * found yet or this is a root node.
+	 */
+	private TreeNode parent = null;
+
+	/**
+	 * @param childNode The child to add to {@link #children}. Must not be
+	 *                  <code>null</code>.
 	 * @throws NullPointerException Thrown if childNode is <code>null</code>.
 	 */
 	public void addChild(final TreeNode childNode) throws NullPointerException {
@@ -50,6 +58,22 @@ public class TreeNode {
 	 */
 	public TreeNode(final FileHeader thePayload) {
 		this.payload = Objects.requireNonNull(thePayload);
+	}
+
+	/**
+	 * @param theParent The value to set as {@link #parent}. May be
+	 *                  <code>null</code> to make this node a root node.
+	 */
+	public void setParent(final TreeNode theParent) {
+		this.parent = theParent;
+	}
+
+	/**
+	 * @return The value set as {@link #parent}. May be <code>null</code> if this
+	 *         node is a root node.
+	 */
+	public TreeNode getParent() {
+		return this.parent;
 	}
 
 	/**
