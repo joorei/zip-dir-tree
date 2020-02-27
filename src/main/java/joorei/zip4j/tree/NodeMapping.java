@@ -50,7 +50,7 @@ final class NodeMapping {
 	 *                                  <code>null</code> value.
 	 */
 	protected NodeMapping(final Iterator<FileHeader> entries, final int initialSize) {
-		Objects.requireNonNull(entries);
+		assert Objects.nonNull(entries);
 		this.nodes = new HashMap<>(initialSize);
 		// create an entry for each directory
 		while (entries.hasNext()) {
@@ -116,9 +116,10 @@ final class NodeMapping {
 	 * @throws NullPointerException Thrown if the given key was null or no node for the given key was found.
 	 */
 	protected TreeNode getNode(final CharSequence key, final boolean allowCaching) throws NullPointerException {
-		Objects.requireNonNull(key);
+		assert Objects.nonNull(key);
 		final TreeNode node = getNodeOrNull(key, allowCaching);
-		return Objects.requireNonNull(node, "No non-null value found for given key: " + key);
+		assert Objects.nonNull(node) : "No non-null value found for given key: " + key;
+		return node;
 	}
 	
 	/**
@@ -126,8 +127,10 @@ final class NodeMapping {
 	 * @param newNode Will be set as {@link #cachedValue}.
 	 */
 	protected void updateCache(final CharSequence newKey, final TreeNode newNode) {
-		this.cachedValue = Objects.requireNonNull(newNode);
-		this.cachedKey = Objects.requireNonNull(newKey);
+		assert Objects.nonNull(newKey);
+		assert Objects.nonNull(newNode);
+		this.cachedKey = newKey;
+		this.cachedValue = newNode;
 	}
 
 	/**

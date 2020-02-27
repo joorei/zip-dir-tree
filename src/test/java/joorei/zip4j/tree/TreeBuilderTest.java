@@ -185,7 +185,7 @@ public class TreeBuilderTest {
 	/**
 	 * Check for an exception when providing {@link FileHeader} with <code>null</code> name.
 	 */
-	@Test(expected=NullPointerException.class)
+	@Test(expected=AssertionError.class)
 	public void testCreateTreeFromFileHeadersWithZip_nullFileHeaderName() throws ZipException {
 		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
 		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();

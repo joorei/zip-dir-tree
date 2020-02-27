@@ -76,7 +76,8 @@ public final class TreeBuilder {
 	 * @throws NullPointerException Thrown if the given value is <code>null</code>.
 	 */
 	protected TreeBuilder(final NodeMapping theDirectoryMapping) throws NullPointerException {
-		this.nodeMapping = Objects.requireNonNull(theDirectoryMapping);
+		assert Objects.nonNull(theDirectoryMapping);
+		this.nodeMapping = theDirectoryMapping;
 	}
 
 	/**
@@ -90,14 +91,14 @@ public final class TreeBuilder {
 	 * @return The root nodes (those without parent) of the tree.
 	 */
 	public static List<? extends TreeNode> createTreeFrom(final List<FileHeader> fileHeaders) {
-		Objects.requireNonNull(fileHeaders);
+		assert Objects.nonNull(fileHeaders);
 		final int initialDirectoryMappingSize = getDirectoryCountEstimate(fileHeaders);
 		final NodeMapping nodeMapping = new NodeMapping(fileHeaders.iterator(), initialDirectoryMappingSize);
 		// Shortcut if there are no directories: treat all fileHeaders as root nodes
 		if (nodeMapping.isEmpty()) {
 			final List<TreeNode> result = new ArrayList<>(fileHeaders.size());
 			for (final FileHeader fileHeader : fileHeaders) {
-				Objects.requireNonNull(fileHeader);
+				assert Objects.nonNull(fileHeader);
 				result.add(new TreeNode(fileHeader));
 			}
 			return result;
@@ -129,9 +130,9 @@ public final class TreeBuilder {
 	 *                              not found in {@link #nodeMapping}.
 	 */
 	protected TreeNode addSingle(final FileHeader fileHeader) throws NullPointerException {
-		Objects.requireNonNull(fileHeader);
+		assert Objects.nonNull(fileHeader);
 		final String originalEntryName = fileHeader.getFileName();
-		Objects.requireNonNull(originalEntryName);
+		assert Objects.nonNull(originalEntryName);
 		if (originalEntryName.isEmpty()) {
 			throw new IllegalArgumentException("An empty path string as file name retrieved from the file header is invalid, as it is internally reserved");
 		}
@@ -225,8 +226,8 @@ public final class TreeBuilder {
 	 */
 	protected TreeNode getOrCreateNode(final FileHeader fileHeader, final String originalEntryName)
 			throws NullPointerException {
-		Objects.requireNonNull(fileHeader);
-		Objects.requireNonNull(originalEntryName);
+		assert Objects.nonNull(fileHeader);
+		assert Objects.nonNull(originalEntryName);
 		return fileHeader.isDirectory()
 				// set caching to 'false' to keep the parent in the cache
 				? this.nodeMapping.getNode(originalEntryName, false)
