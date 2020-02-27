@@ -18,12 +18,12 @@ final class NodeMapping {
 	/**
 	 * The mapping from ZIP entry path strings to ZIP entries.
 	 */
-	private final Map<String, TreeNode> nodes;
+	private final Map<CharSequence, TreeNode> nodes;
 	/**
 	 * The key of the value currently stored in the cache. Kept in sync with
 	 * {@link #cachedValue}.
 	 */
-	private String cachedKey;
+	private CharSequence cachedKey;
 	/**
 	 * The value currently stored in the cache. Kept in sync with
 	 * {@link #cachedKey}.
@@ -93,7 +93,7 @@ final class NodeMapping {
 	 *                     can be cached at the same time.
 	 * @return The found node or <code>null</code>.
 	 */
-	protected TreeNode getNodeOrNull(final String key, final boolean allowCaching) {
+	protected TreeNode getNodeOrNull(final CharSequence key, final boolean allowCaching) {
 		TreeNode node = this.getCacheValue(key);
 		if (node != null) {
 			return node;
@@ -115,7 +115,7 @@ final class NodeMapping {
 	 * @return The found node.
 	 * @throws NullPointerException Thrown if the given key was null or no node for the given key was found.
 	 */
-	protected TreeNode getNode(final String key, final boolean allowCaching) throws NullPointerException {
+	protected TreeNode getNode(final CharSequence key, final boolean allowCaching) throws NullPointerException {
 		Objects.requireNonNull(key);
 		final TreeNode node = getNodeOrNull(key, allowCaching);
 		return Objects.requireNonNull(node, "No non-null value found for given key: " + key);
@@ -125,7 +125,7 @@ final class NodeMapping {
 	 * @param newKey  Will be set as {@link #cachedKey}.
 	 * @param newNode Will be set as {@link #cachedValue}.
 	 */
-	protected void updateCache(final String newKey, final TreeNode newNode) {
+	protected void updateCache(final CharSequence newKey, final TreeNode newNode) {
 		this.cachedValue = Objects.requireNonNull(newNode);
 		this.cachedKey = Objects.requireNonNull(newKey);
 	}
@@ -135,7 +135,7 @@ final class NodeMapping {
 	 * @return The value currently cached. May be <code>null</code>.
 	 * @throws NullPointerException Thrown if the given key is <code>null</code>.
 	 */
-	protected TreeNode getCacheValue(final String key) throws NullPointerException {
+	protected TreeNode getCacheValue(final CharSequence key) throws NullPointerException {
 		return key.equals(this.cachedKey) ? this.cachedValue : null;
 	}
 }
