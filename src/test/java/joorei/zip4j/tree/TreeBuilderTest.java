@@ -16,93 +16,6 @@ import net.lingala.zip4j.model.FileHeader;
  */
 @SuppressWarnings({"static-method", "javadoc"})
 public class TreeBuilderTest {
-	/**
-	 * Test if the ignoreLastN parameter works with 0 as value.
-	 */
-	@Test
-	public void testGetLongestSubstringEndingWithCharacter_isSame() {
-		final String input = "foo/";
-		final String output = TreeBuilder.getLongestSubstringEndingWithCharacter(input, '/', 0);
-		// String instance reusage is assumed, hence assertSame instead of assertEquals is used.
-		assertSame(input, output);
-	}
-
-	/**
-	 * Test empty string return if input string does not contain the search-character
-	 */
-	@Test
-	public void testGetLongestSubstringEndingWithCharacter_isEmptyString() {
-		final String output = TreeBuilder.getLongestSubstringEndingWithCharacter("foo", '/', 0);
-		// String instance reusage is assumed, hence assertSame instead of assertEquals is used.
-		assertSame("", output);
-	}
-
-	/**
-	 * Test some different values for the <code>ignoreLastN</code> parameter.
-	 */
-	@Test
-	public void testGetLongestSubstringEndingWithCharacter_ignoreLastN() {
-		final String input = "////////////////////";
-		for (int i = 0; i < input.length(); i++) {
-			final String output = TreeBuilder.getLongestSubstringEndingWithCharacter(input, '/', i);
-			assertEquals(input.subSequence(0, input.length() - i), output);
-		}
-	}
-
-	/**
-	 * Testing contract
-	 */
-	@Test
-	public void testGetLongestSubstringEndingWithCharacter_multipleBetween() {
-		final String output = TreeBuilder.getLongestSubstringEndingWithCharacter("f/o/o", '/', 0);
-		assertEquals("f/o/", output);
-	}
-
-	/**
-	 * Testing contract
-	 */
-	@Test
-	public void testGetLongestSubstringEndingWithCharacter_multipleBetweenSuccessive() {
-		final String output = TreeBuilder.getLongestSubstringEndingWithCharacter("f//o//o", '/', 0);
-		assertEquals("f//o//", output);
-	}
-
-	/**
-	 * Testing contract
-	 */
-	@Test
-	public void testGetLongestSubstringEndingWithCharacter_multipleAtEndSuccessive() {
-		final String output = TreeBuilder.getLongestSubstringEndingWithCharacter("f/o/o//", '/', 0);
-		assertSame("f/o/o//", output);
-	}
-
-	/**
-	 * Testing contract
-	 */
-	@Test
-	public void testGetLongestSubstringEndingWithCharacter_multipleAtEndSuccessiveMinus1() {
-		final String output = TreeBuilder.getLongestSubstringEndingWithCharacter("f//o/o//", '/', 1);
-		assertEquals("f//o/o/", output);
-	}
-
-	/**
-	 * Testing contract
-	 */
-	@Test
-	public void testGetLongestSubstringEndingWithCharacter_endMinus1() {
-		final String output = TreeBuilder.getLongestSubstringEndingWithCharacter("f/o/o/", '/', 1);
-		assertEquals("f/o/", output);
-	}
-
-	/**
-	 * Testing contract
-	 */
-	@Test
-	public void testGetLongestSubstringEndingWithCharacter_multipleBetweenSuccessiveMinus1() {
-		final String output = TreeBuilder.getLongestSubstringEndingWithCharacter("f//o//o/", '/', 1);
-		assertEquals("f//o//", output);
-	}
-
 	@Test
 	public void testZipFileAssumptions() throws ZipException {
 		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
@@ -122,14 +35,14 @@ public class TreeBuilderTest {
 	public void testCreateTreeFromFileHeadersWithZip() throws ZipException {
 		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
 		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
-		final List<? extends TreeNode> rootNodes = TreeBuilder.createTreeFrom(fileHeaders);
+		final List<? extends TreeNode> rootNodes = TreeBuilder.createTreeFromUnsorted(fileHeaders, 16);
 		assertEquals(5, rootNodes.size());
-		final TreeNode d1 = rootNodes.get(0);
-		final TreeNode f0 = d1.getChildren().get(0);
-		final TreeNode f1 = rootNodes.get(1);
-		final TreeNode f2 = rootNodes.get(2);
-		final TreeNode f3 = d1.getChildren().get(1);
-		final TreeNode f4 = d1.getChildren().get(2);
+		final TreeNode d1 = rootNodes.get(2);
+		final TreeNode f3 = d1.getChildren().get(0);
+		final TreeNode f2 = rootNodes.get(1);
+		final TreeNode f1 = rootNodes.get(0);
+		final TreeNode f4 = d1.getChildren().get(1);
+		final TreeNode f0 = d1.getChildren().get(2);
 		final TreeNode f5 = rootNodes.get(3);
 		final TreeNode f6 = rootNodes.get(4);
 		checkAssumption(d1, true, ZipTestFileCreator.DIR_D1, 3, null);
@@ -143,73 +56,33 @@ public class TreeBuilderTest {
 	}
 
 	/**
-	 * Check for an exception when providing the same {@link FileHeader} multiple times.
-	 */
-	@Test(expected=IllegalArgumentException.class)
-	public void testCreateTreeFromFileHeadersWithZipB_sameFileHeader() throws ZipException {
-		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
-		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
-		fileHeaders.addAll(fileHeaders);
-		TreeBuilder.createTreeFrom(fileHeaders);
-		fail();
-	}
-
-	/**
 	 * Check for an exception when providing {@link FileHeader} directory with <code>null</code> name.
 	 */
-	@Test(expected=IllegalArgumentException.class)
+	@Test(expected=NullPointerException.class)
 	public void testCreateTreeFromFileHeadersWithZip_nullFileHeaderDirectoryName() throws ZipException {
 		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
 		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
 		final FileHeader fileHeader = fileHeaders.get(1);
 		assertTrue(fileHeader.isDirectory());
 		fileHeader.setFileName(null);
-		TreeBuilder.createTreeFrom(fileHeaders);
+		TreeBuilder.createTreeFromUnsorted(fileHeaders, 16);
 		fail();
 	}
-	
-	/**
-	 * Check for an exception when providing {@link FileHeader} directory with empty name.
-	 */
-	@Test(expected=IllegalArgumentException.class)
-	public void testCreateTreeFromFileHeadersWithZip_emptyFileHeaderDirectoryName() throws ZipException {
-		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
-		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
-		final FileHeader fileHeader = fileHeaders.get(1);
-		assertTrue(fileHeader.isDirectory());
-		fileHeader.setFileName("");
-		TreeBuilder.createTreeFrom(fileHeaders);
-		fail();
-	}
-	
+
 	/**
 	 * Check for an exception when providing {@link FileHeader} with <code>null</code> name.
 	 */
-	@Test(expected=AssertionError.class)
+	@Test(expected=NullPointerException.class)
 	public void testCreateTreeFromFileHeadersWithZip_nullFileHeaderName() throws ZipException {
 		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
 		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
 		final FileHeader fileHeader = fileHeaders.get(0);
 		assertFalse(fileHeader.isDirectory());
 		fileHeader.setFileName(null);
-		TreeBuilder.createTreeFrom(fileHeaders);
+		TreeBuilder.createTreeFromUnsorted(fileHeaders, 16);
 		fail();
 	}
-	
-	/**
-	 * Check for an exception when providing {@link FileHeader} with empty name.
-	 */
-	@Test(expected=IllegalArgumentException.class)
-	public void testCreateTreeFromFileHeadersWithZip_emptyFileHeaderName() throws ZipException {
-		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
-		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
-		final FileHeader fileHeader = fileHeaders.get(0);
-		assertFalse(fileHeader.isDirectory());
-		fileHeader.setFileName("");
-		TreeBuilder.createTreeFrom(fileHeaders);
-		fail();
-	}
-	
+
 	protected static void checkAssumption(final FileHeader fileHeader, final boolean isDir, final String name) {
 		assertTrue(isDir == fileHeader.isDirectory());
 		assertEquals(name, fileHeader.getFileName());

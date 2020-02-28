@@ -1,13 +1,12 @@
 package joorei.zip4j.tree;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.zip.ZipFile;
 
 import net.lingala.zip4j.model.FileHeader;
-import net.lingala.zip4j.util.InternalZipConstants;
 
 /**
  * ZIP files do not have a concept of a hierarchy of entries. Instead every
@@ -26,14 +25,14 @@ import net.lingala.zip4j.util.InternalZipConstants;
  * <p>
  * As of ZIP specification version 2.0 each ZIP entry carries the information if
  * it is a directory or a file. Assuming that ZIP entries for all directories
- * are present, that information can be used together with the slashes in the ZIP
- * entry identifier to recreate the directory hierarchy.
+ * are present, that information can be used together with the slashes in the
+ * ZIP entry identifier to recreate the directory hierarchy.
  * <p>
  * This class allows to re-build the directory tree hierarchy of the original
- * files and directories from {@link FileHeader}s read from a
- * {@link ZipFile}. It will take the special cases mentioned above into account
- * and thus result in a valid directory structure even if the original files or
- * directories contain slash characters.
+ * files and directories from {@link FileHeader}s read from a {@link ZipFile}.
+ * It will take the special cases mentioned above into account and thus result
+ * in a valid directory structure even if the original files or directories
+ * contain slash characters.
  *
  * @see <a href=
  *      "https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT">4.4.17
@@ -45,247 +44,124 @@ import net.lingala.zip4j.util.InternalZipConstants;
  */
 public final class TreeBuilder {
 	/**
-	 * Copied from ZIP specification: <blockquote>All slashes MUST be forward
-	 * slashes '/' as opposed to backwards slashes '\' for compatibility with Amiga
-	 * and UNIX file systems etc.</blockquote>
-	 * 
-	 * @see <a href=
-	 *      "https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT">4.4.17
-	 *      file name: (Variable)</a>
-	 * @see InternalZipConstants#ZIP_FILE_SEPARATOR
-	 */
-	private static final char ZIP_PATH_DELIMITER = '/';
-
-	/**
-	 * The root entries found to far.
-	 */
-	private final List<TreeNode> rootEntries = new ArrayList<>();
-
-	/**
-	 * Speed up graph building by using a mapping between entry paths and their
-	 * {@link FileHeader}. The nodes will be connected during the tree creation.
-	 */
-	protected final NodeMapping nodeMapping;
-
-	/**
-	 * Initializes an instance using the given {@link NodeMapping}. Won't
-	 * perform any grouping yet. Use {@link #addSingle(FileHeader)} to build the
-	 * tree.
-	 * 
-	 * @param theDirectoryMapping Value to set as {@link #nodeMapping}. Must not be <code>null</code>.
-	 * @throws NullPointerException Thrown if the given value is <code>null</code>.
-	 */
-	protected TreeBuilder(final NodeMapping theDirectoryMapping) throws NullPointerException {
-		assert Objects.nonNull(theDirectoryMapping);
-		this.nodeMapping = theDirectoryMapping;
-	}
-
-	/**
-	 * @param fileHeaders It is crucial that all ZIP entries that are directories
-	 *                    and play a role (as parent or child directory) in the
-	 *                    resulting tree are present, otherwise files may be nested
-	 *                    in the wrong directory. Changing the {@link FileHeader}s
-	 *                    after creating the tree may invalidate the tree. The given
-	 *                    value must not be <code>null</code> nor contain <code>null</code>
-	 *                    as elements.
-	 * @return The root nodes (those without parent) of the tree.
-	 */
-	public static List<? extends TreeNode> createTreeFrom(final List<FileHeader> fileHeaders) {
-		assert Objects.nonNull(fileHeaders);
-		final int initialDirectoryMappingSize = getDirectoryCountEstimate(fileHeaders);
-		final NodeMapping nodeMapping = new NodeMapping(fileHeaders.iterator(), initialDirectoryMappingSize);
-		// Shortcut if there are no directories: treat all fileHeaders as root nodes
-		if (nodeMapping.isEmpty()) {
-			final List<TreeNode> result = new ArrayList<>(fileHeaders.size());
-			for (final FileHeader fileHeader : fileHeaders) {
-				assert Objects.nonNull(fileHeader);
-				result.add(new TreeNode(fileHeader));
-			}
-			return result;
-		}
-		// If there are directories then check the name of each file header to determine the directory structure
-		final TreeBuilder treeBuilder = new TreeBuilder(nodeMapping);
-		for (final FileHeader fileHeader : fileHeaders) {
-			treeBuilder.addSingle(fileHeader);
-		}
-		return treeBuilder.getRootNodes();
-	}
-
-	/**
-	 * Adds a single {@link FileHeader} to the tree. Previously unknown edges in the
-	 * tree graph are detected automatically while adding {@link FileHeader}s.
-	 * 
-	 * @param fileHeader The order in which the {@link FileHeader}s are added does
-	 *                   not matter for the result. However best performance is
-	 *                   achieved if the {@link FileHeader}s are added while
-	 *                   (partially or completely) sorted by their result of
-	 *                   {@link FileHeader#getFileName()}.
-	 * @return The node the given {@link FileHeader} is now wrapped in. Provides
-	 *         access to its currently known parent and children.
-	 * @throws NullPointerException Thrown in case of unexpected <code>null</code>
-	 *                              values, eg. when the given {@link FileHeader}
-	 *                              parameter or its {@link FileHeader#getFileName}
-	 *                              method returns <code>null</code>, but also if
-	 *                              the {@link FileHeader} is a directory but was
-	 *                              not found in {@link #nodeMapping}.
-	 */
-	protected TreeNode addSingle(final FileHeader fileHeader) throws NullPointerException {
-		assert Objects.nonNull(fileHeader);
-		final String originalEntryName = fileHeader.getFileName();
-		assert Objects.nonNull(originalEntryName);
-		if (originalEntryName.isEmpty()) {
-			throw new IllegalArgumentException("An empty path string as file name retrieved from the file header is invalid, as it is internally reserved");
-		}
-		/*
-		 * We're searching for a directory to put the given fileHeader into. So first
-		 * get the full entry name (which includes all parent directories).
-		 */
-		String potentialParentPath = originalEntryName;
-		/*
-		 * This loop does not need an end condition, however we add one to be on the
-		 * safe side and avoid infinite loops in case of bugs. As end condition an
-		 * iteration count greater than the number of characters in the originally given
-		 * path is used as it must not take longer to find the parent because the length
-		 * is reduced by at least 1 in each iteration.
-		 */
-		for (int i = 0; i <= originalEntryName.length(); i++) {
-			/*
-			 * We remove the last character and everything else before until a slash
-			 * character. For directories in the first iteration this assures that a
-			 * directory is not set as it's own child. For directories after the first
-			 * iteration this starts the testing of the next ending slash character from the
-			 * back. For files this removes the filename, even if it ends with a slash. Thus
-			 * after this we have a path that ends with a slash (or is an empty string,
-			 * indicating the root node) and is potentially the parent path of the given
-			 * fileHeader while definitively not being the same path as the current
-			 * fileHeader.
-			 * The reason why we can (and in some cases must) ignore the last character is
-			 * because it is either a slash character AFTER the directory name or it is a
-			 * character that is part of the file/directory name, as empty names are neither
-			 * allowed nor supported.
-			 */
-			potentialParentPath = getLongestSubstringEndingWithCharacter(potentialParentPath, ZIP_PATH_DELIMITER, 1);
-			/*
-			 * An empty string as potentialParentPath means we found a root node and can
-			 * stop processing the given FileHeader.
-			 */
-			if (potentialParentPath.isEmpty()) {
-				final TreeNode rootNode = getOrCreateNode(fileHeader, originalEntryName);
-				this.rootEntries.add(rootNode);
-				return rootNode;
-			}
-			/*
-			 * We check if the path is the actual parent directory by checking the mapping
-			 * if the path is known. If the result is not null we got the parent directory
-			 * and use it, otherwise we continue the loop.
-			 */
-			final TreeNode foundParent = this.nodeMapping.getNodeOrNull(potentialParentPath, true);
-			if (foundParent != null) {
-				final TreeNode child = getOrCreateNode(fileHeader, originalEntryName);
-				foundParent.addChild(child);
-				if (child.getParent() == null) {
-					child.setParent(foundParent);
-				} else {
-					// As the ZIP directory structure is a tree we expect to find at maximum one parent
-					// for each node. If the parent of a child is already set this would mean we found
-					// a second parent at this point.
-					throw new IllegalStateException("Multiple parents for a single node found; should not be possible in a tree.");
-				}
-				return child;
-			}
-			/*
-			 * The loop is continued until one of the two return statements is reached.
-			 */
-		}
-		/*
-		 * This exception is only thrown if the artificial end condition of the loop above was
-		 * triggered, which indicates a bug.
-		 */
-		throw new IllegalStateException("could not find parent because of internal programming error");
-	}
-
-	/**
-	 * If the given FileHeader is a directory it will be fetched from the
-	 * nodeMapping (without caching, to keep the parent in the cache), as all
-	 * directories should be already present there. If it is not a directory a new
-	 * {@link TreeNode} will be created with the given {@link FileHeader}
-	 * as payload.
-	 * 
-	 * @param fileHeader        Will be checked if it is a directory and if not so
-	 *                          used as content of a new {@link TreeNode}.
-	 * @param originalEntryName Will be used to check if a
-	 *                          {@link TreeNode} already exists in
-	 *                          {@link #nodeMapping} if the given {@link FileHeader}
-	 *                          is not a directory.
-	 * @return The existing node from {@link #nodeMapping} if the given
-	 *         {@link FileHeader} is a directory or a new node if the given
-	 *         {@link FileHeader} is not a directory.
-	 * @throws NullPointerException Thrown if the given {@link FileHeader} is a
-	 *                              directory but no {@link TreeNode}
-	 *                              could be found in {@link #nodeMapping}.
-	 */
-	protected TreeNode getOrCreateNode(final FileHeader fileHeader, final String originalEntryName)
-			throws NullPointerException {
-		assert Objects.nonNull(fileHeader);
-		assert Objects.nonNull(originalEntryName);
-		return fileHeader.isDirectory()
-				// set caching to 'false' to keep the parent in the cache
-				? this.nodeMapping.getNode(originalEntryName, false)
-				: new TreeNode(fileHeader);
-	}
-
-	/**
-	 * @return {@link #rootEntries}
-	 */
-	protected List<TreeNode> getRootNodes() {
-		return this.rootEntries;
-	}
-
-	/**
-	 * This implementation assumes that for "large" ZIP files (more than 1024
-	 * file headers) on average about 10 percent of the file headers are
-	 * directories.
+	 * Structures the given fileHeaders into a tree hierarchy.
 	 * <p>
-	 * Thus for input sizes bigger than 1024 this implementation will default to returning a
-	 * tenth of the given input size. For 1024 and smaller values it will return the original
-	 * size instead.
+	 * If the given list contains the same {@link FileHeader} multiple times or if
+	 * multiple {@link FileHeader}s have the same value returned by
+	 * {@link FileHeader#getFileName()} then these {@link FileHeader}s will
+	 * positioned as siblings in the hierarchy.
 	 * <p>
-	 * Both the definition of "large" as well as the 10-percent assumption are complete
-	 * guesswork and based on no scientific foundation. It is however hoped that the
-	 * returned values result in better initial map sizes than a fixed number like
-	 * the {@link HashMap}s default value of 16 would.
+	 * If {@link FileHeader#getFileName()} returns an empty string the
+	 * {@link FileHeader} will be positioned at the root level.
 	 *
-	 * @param fileHeaders All file headers to process (both directories and non-directories).
-	 * @return The number of directory file headers assumed.
+	 * @param fileHeaders            It is crucial that all ZIP entries that are
+	 *                               directories and play a role (as parent or child
+	 *                               directory) in the resulting tree are present,
+	 *                               otherwise files may be nested in the wrong
+	 *                               directory. Changing the {@link FileHeader}s
+	 *                               after creating the tree may invalidate the
+	 *                               tree.
+	 * @param estimatedRootNodeCount The initial internal size of the returned
+	 *                               {@link List}. Will grow if necessary.
+	 * @return The root nodes (those without parent) of the tree.
+	 * @throws NullPointerException Neither the given {@link List} nor its
+	 *                              {@link FileHeader} items nor the values returned
+	 *                              by their {@link FileHeader#getFileName()} must
+	 *                              be <code>null</code>.
 	 */
-	protected static int getDirectoryCountEstimate(final List<FileHeader> fileHeaders)
-	{
-		final int fileHeaderCount = fileHeaders.size();
-		return fileHeaderCount > 1024 ? fileHeaderCount / 10 : fileHeaderCount;
+	public static List<? extends TreeNode> createTreeFromUnsorted(final List<FileHeader> fileHeaders,
+			final int estimatedRootNodeCount) throws NullPointerException {
+		sort(fileHeaders);
+		return createTreeFromSorted(fileHeaders, estimatedRootNodeCount);
 	}
 
 	/**
-	 * Returns the longest substring from the given input that ends with the given
-	 * character.
-	 * 
-	 * @param input       The {@link String} The input to read the result from.
-	 * @param character   The character the result should end at. Must not be <code>null</code>.
-	 * @param ignoreLastN Handle the input as if it ends <code>n</code> characters
-	 *                    before its actual end. <code>n</code> being the given
-	 *                    value.
-	 * @return As the longest substring is requested the substring will always start
-	 *         at the beginning of the input {@link String} and end at the last
-	 *         occurrence of the given character. If the given character does not
-	 *         occur in the given input an empty {@link String} is returned.
-	 * @throws NullPointerException Thrown if the given input string is <code>null</code>.
+	 * Like {@link #createTreeFromUnsorted(List,int)} but assumes the given
+	 * {@link List} was already sorted by the values returned by
+	 * {@link FileHeader#getFileName()} (natural String order with the shortest
+	 * values as first element and the longest as last).
+	 *
+	 * @param fileHeaders
+	 * @param estimatedRootNodeCount
+	 *
+	 * @return
+	 *
+	 * @see #createTreeFromUnsorted(List,int)
 	 */
-	protected static String getLongestSubstringEndingWithCharacter(final String input, final char character,
-			final int ignoreLastN) throws NullPointerException {
-		final int fromIndex = input.length() - ignoreLastN;
-		final int index = input.lastIndexOf(character, fromIndex - 1);
-		if (index < 0) {
-			return "";
+	@SuppressWarnings("javadoc")
+	public static List<? extends TreeNode> createTreeFromSorted(final List<FileHeader> fileHeaders,
+			final int estimatedRootNodeCount) {
+		final int fileHeadersCount = Objects.requireNonNull(fileHeaders).size();
+		final List<TreeNode> rootNodes = new ArrayList<>(estimatedRootNodeCount);
+		/*
+		 * The given fileHeaders list is assumed to be sorted by the fileNames of the
+		 * contained FileHeaders. Because the fileName is the full path in the ZIP file,
+		 * the entries inside a directory always follow directly after that directory in
+		 * the list.
+		 *
+		 * Using this information the list can be looped exactly one time. Each item is
+		 * added to the most recent directory found whose fileName matches the start of
+		 * the current item.
+		 */
+		TreeNode currentParent = null;
+		for (int i = 0; i < fileHeadersCount; i++) {
+			final FileHeader currentFileHeader = Objects.requireNonNull(fileHeaders.get(i));
+			final String currentFileHeaderName = Objects.requireNonNull(currentFileHeader.getFileName());
+			final TreeNode currentNode = new TreeNode(currentFileHeader);
+
+			/*
+			 * Find the most recent directory whose fileName matches the start of the
+			 * current item by moving up in the directory hierarchy until a match is found
+			 * or the root directory (null) is reached.
+			 */
+			while (currentParent != null
+					&& !currentFileHeaderName.startsWith(currentParent.getPayload().getFileName())) {
+				currentParent = currentParent.getParent();
+			}
+
+			/*
+			 * If we reached the root directory level with the previous while loop we add
+			 * the current item to the list of root entries. Otherwise we add it to the
+			 * parent found in the previous loop.
+			 */
+			if (currentParent == null) {
+				rootNodes.add(currentNode);
+			} else {
+				currentParent.addChild(currentNode);
+				currentNode.setParent(currentParent);
+			}
+
+			/*
+			 * Only items that are directory entries are set as parent. It is ok to just set
+			 * the current item as parent here even if we do not know if the following item
+			 * will be inside the current item or a sibling of the current item. If the
+			 * latter is the case the while loop will simply move up in the directory
+			 * hierarchy until the correct parent directory is found again and sets it as
+			 * parent.
+			 */
+			if (currentFileHeader.isDirectory()) {
+				currentParent = currentNode;
+			}
 		}
-		return input.substring(0, index + 1);
+		return rootNodes;
+	}
+
+	/**
+	 * Sorts the given list by the value returned by
+	 * {@link FileHeader#getFileName()}.
+	 * 
+	 * @param fileHeaders The list to sort.
+	 * @throws NullPointerException Thrown if the given list is <code>null</code>,
+	 *                              contains <code>null</code> items or if an item
+	 *                              returns <code>null</code> for
+	 *                              {@link FileHeader#getFileName()}.
+	 */
+	protected static void sort(final List<FileHeader> fileHeaders) throws NullPointerException {
+		fileHeaders.sort(new Comparator<FileHeader>() {
+			@Override
+			public int compare(final FileHeader arg0, final FileHeader arg1) {
+				return arg0.getFileName().compareTo(arg1.getFileName());
+			}
+		});
 	}
 }
