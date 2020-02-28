@@ -9,7 +9,7 @@ import net.lingala.zip4j.model.FileHeader;
 
 /**
  * A node potentially connected to child nodes and a parent node of the same
- * type. Carryies a {@link FileHeader} instance as {@link #payload}.
+ * type. Carries a {@link FileHeader} instance as {@link #payload}.
  * <p>
  * There is no special class for leaf nodes. Those are just normal nodes with no
  * children set.
@@ -30,7 +30,9 @@ public class TreeNode {
 
 	/**
 	 * The children of this node. <code>null</code> if no children were added yet.
-	 * Contained elements must not be <code>null</code>.
+	 * May be as well non-<code>null</code> and empty. Contained elements must not
+	 * be <code>null</code> but the class will not prevent adding
+	 * <code>null</code>-values.
 	 */
 	private List<TreeNode> children = null;
 
