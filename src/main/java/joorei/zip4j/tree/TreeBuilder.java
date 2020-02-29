@@ -149,12 +149,21 @@ public final class TreeBuilder {
 	/**
 	 * Sorts the given list by the value returned by
 	 * {@link FileHeader#getFileName()}.
+	 * <p>
+	 * The sort algorithm used is the default of {@link List#sort(Comparator)} which
+	 * is based on TimSort and well suited for this use case as it is an
+	 * adaptive sorting algorithm (taking advantage of pre-sorted lists). This is
+	 * because it is likely that entries were added to the backing ZIP file not
+	 * randomly but by iterating through the directory tree, which should result in
+	 * a (at least partially) sorted list of {@link FileHeader}s when reading the
+	 * entries.
 	 * 
 	 * @param fileHeaders The list to sort.
 	 * @throws NullPointerException Thrown if the given list is <code>null</code>,
 	 *                              contains <code>null</code> items or if an item
 	 *                              returns <code>null</code> for
 	 *                              {@link FileHeader#getFileName()}.
+	 * @see List#sort(Comparator)
 	 */
 	protected static void sort(final List<FileHeader> fileHeaders) throws NullPointerException {
 		fileHeaders.sort(new Comparator<FileHeader>() {
