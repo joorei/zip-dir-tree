@@ -42,7 +42,7 @@ import net.lingala.zip4j.model.FileHeader;
  *      Current minimum feature versions are as defined below</a>
  * 
  */
-public final class TreeBuilder {
+public class TreeBuilder {
 	/**
 	 * Structures the given fileHeaders into a tree hierarchy.
 	 * <p>
@@ -69,7 +69,7 @@ public final class TreeBuilder {
 	 *                              by their {@link FileHeader#getFileName()} must
 	 *                              be <code>null</code>.
 	 */
-	public static List<? extends TreeNode> createTreeFromUnsorted(final List<FileHeader> fileHeaders,
+	public List<? extends TreeNode> createTreeFromUnsorted(final List<FileHeader> fileHeaders,
 			final int estimatedRootNodeCount) throws NullPointerException {
 		sort(fileHeaders);
 		return createTreeFromSorted(fileHeaders, estimatedRootNodeCount);
@@ -89,7 +89,7 @@ public final class TreeBuilder {
 	 * @see #createTreeFromUnsorted(List,int)
 	 */
 	@SuppressWarnings("javadoc")
-	public static List<? extends TreeNode> createTreeFromSorted(final List<FileHeader> fileHeaders,
+	public List<? extends TreeNode> createTreeFromSorted(final List<FileHeader> fileHeaders,
 			final int estimatedRootNodeCount) {
 		final int fileHeadersCount = Objects.requireNonNull(fileHeaders).size();
 		final List<TreeNode> rootNodes = new ArrayList<>(estimatedRootNodeCount);
@@ -151,12 +151,11 @@ public final class TreeBuilder {
 	 * {@link FileHeader#getFileName()}.
 	 * <p>
 	 * The sort algorithm used is the default of {@link List#sort(Comparator)} which
-	 * is based on TimSort and well suited for this use case as it is an
-	 * adaptive sorting algorithm (taking advantage of pre-sorted lists). This is
-	 * because it is likely that entries were added to the backing ZIP file not
-	 * randomly but by iterating through the directory tree, which should result in
-	 * a (at least partially) sorted list of {@link FileHeader}s when reading the
-	 * entries.
+	 * is based on TimSort and well suited for this use case as it is an adaptive
+	 * sorting algorithm (taking advantage of pre-sorted lists). This is because it
+	 * is likely that entries were added to the backing ZIP file not randomly but by
+	 * iterating through the directory tree, which should result in a (at least
+	 * partially) sorted list of {@link FileHeader}s when reading the entries.
 	 * 
 	 * @param fileHeaders The list to sort.
 	 * @throws NullPointerException Thrown if the given list is <code>null</code>,
@@ -165,7 +164,7 @@ public final class TreeBuilder {
 	 *                              {@link FileHeader#getFileName()}.
 	 * @see List#sort(Comparator)
 	 */
-	protected static void sort(final List<FileHeader> fileHeaders) throws NullPointerException {
+	protected void sort(final List<FileHeader> fileHeaders) throws NullPointerException {
 		fileHeaders.sort(new Comparator<FileHeader>() {
 			@Override
 			public int compare(final FileHeader arg0, final FileHeader arg1) {

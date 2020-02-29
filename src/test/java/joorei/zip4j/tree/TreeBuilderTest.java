@@ -14,8 +14,11 @@ import net.lingala.zip4j.model.FileHeader;
 /**
  * Test {@link TreeBuilder}
  */
-@SuppressWarnings({"static-method", "javadoc"})
+@SuppressWarnings({ "static-method", "javadoc" })
 public class TreeBuilderTest {
+
+	private static final TreeBuilder TREE_BUILDER = new TreeBuilder();
+
 	@Test
 	public void testZipFileAssumptions() throws ZipException {
 		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
@@ -35,7 +38,7 @@ public class TreeBuilderTest {
 	public void testCreateTreeFromFileHeadersWithZip() throws ZipException {
 		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
 		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
-		final List<? extends TreeNode> rootNodes = TreeBuilder.createTreeFromUnsorted(fileHeaders, 16);
+		final List<? extends TreeNode> rootNodes = TREE_BUILDER.createTreeFromUnsorted(fileHeaders, 16);
 		assertEquals(5, rootNodes.size());
 		final TreeNode d1 = rootNodes.get(2);
 		final TreeNode f3 = d1.getChildren().get(0);
@@ -56,30 +59,32 @@ public class TreeBuilderTest {
 	}
 
 	/**
-	 * Check for an exception when providing {@link FileHeader} directory with <code>null</code> name.
+	 * Check for an exception when providing {@link FileHeader} directory with
+	 * <code>null</code> name.
 	 */
-	@Test(expected=NullPointerException.class)
+	@Test(expected = NullPointerException.class)
 	public void testCreateTreeFromFileHeadersWithZip_nullFileHeaderDirectoryName() throws ZipException {
 		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
 		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
 		final FileHeader fileHeader = fileHeaders.get(1);
 		assertTrue(fileHeader.isDirectory());
 		fileHeader.setFileName(null);
-		TreeBuilder.createTreeFromUnsorted(fileHeaders, 16);
+		TREE_BUILDER.createTreeFromUnsorted(fileHeaders, 16);
 		fail();
 	}
 
 	/**
-	 * Check for an exception when providing {@link FileHeader} with <code>null</code> name.
+	 * Check for an exception when providing {@link FileHeader} with
+	 * <code>null</code> name.
 	 */
-	@Test(expected=NullPointerException.class)
+	@Test(expected = NullPointerException.class)
 	public void testCreateTreeFromFileHeadersWithZip_nullFileHeaderName() throws ZipException {
 		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
 		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
 		final FileHeader fileHeader = fileHeaders.get(0);
 		assertFalse(fileHeader.isDirectory());
 		fileHeader.setFileName(null);
-		TreeBuilder.createTreeFromUnsorted(fileHeaders, 16);
+		TREE_BUILDER.createTreeFromUnsorted(fileHeaders, 16);
 		fail();
 	}
 
@@ -87,8 +92,9 @@ public class TreeBuilderTest {
 		assertTrue(isDir == fileHeader.isDirectory());
 		assertEquals(name, fileHeader.getFileName());
 	}
-	
-	protected static void checkAssumption(final TreeNode node, final boolean isDir, final String name, final int childrenCount, final TreeNode parent) {
+
+	protected static void checkAssumption(final TreeNode node, final boolean isDir, final String name,
+			final int childrenCount, final TreeNode parent) {
 		checkAssumption(node.getPayload(), isDir, name);
 		assertEquals(childrenCount, node.getChildren().size());
 		assertSame(parent, node.getParent());
