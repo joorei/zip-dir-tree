@@ -9,7 +9,7 @@ import net.lingala.zip4j.model.FileHeader;
 @SuppressWarnings("javadoc")
 public class SimpleTester {
 
-	private static final TreeBuilder TREE_BUILDER = new TreeBuilder();
+	private static final TreeBuilder TREE_BUILDER = new DirectoryFlagTreeBuilder();
 
 	/**
 	 * Structure the file headers of a ZIP file to see if and how fast it works for
@@ -25,7 +25,7 @@ public class SimpleTester {
 		final long startFileHeaderSorting = System.currentTimeMillis();
 		TREE_BUILDER.sort(fileHeaders);
 		final long startFileHeaderStructuring = System.currentTimeMillis();
-		final List<? extends TreeNode> rootNodes = TREE_BUILDER.createTreeFromSorted(fileHeaders, 1);
+		final List<? extends TreeNode> rootNodes = TREE_BUILDER.createTreeFromSorted(fileHeaders);
 		final long endTime = System.currentTimeMillis();
 		final long timeToSortFileHeaders = startFileHeaderStructuring - startFileHeaderSorting;
 		final long timeToStructureFileHeaders = endTime - startFileHeaderStructuring;

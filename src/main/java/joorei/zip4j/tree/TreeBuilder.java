@@ -1,6 +1,5 @@
 package joorei.zip4j.tree;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -15,24 +14,12 @@ import net.lingala.zip4j.model.FileHeader;
  * file system folders, forward slashes are used to separate directory names in
  * the identifier to denote the path of a file archived in the ZIP archive.
  * <p>
- * However the string identifier of an entry can contain additional slashes when
- * the original directory name or file name contains one (or more) slashes
- * itself. This may occur when ZIP files are created from a source where slashes
- * are allowed in "file" names or "directory" names (e. g. a non-file system
- * source). Using only the slashes in the string identifier to detect the
- * directory hierarchy would result in a different directory hierarchy than used
- * in the source.
+ * As of ZIP specification version 2.0 each ZIP entry also carries the
+ * information if it is a directory or a file.
  * <p>
- * As of ZIP specification version 2.0 each ZIP entry carries the information if
- * it is a directory or a file. Assuming that ZIP entries for all directories
- * are present, that information can be used together with the slashes in the
- * ZIP entry identifier to recreate the directory hierarchy.
- * <p>
- * This class allows to re-build the directory tree hierarchy of the original
- * files and directories from {@link FileHeader}s read from a {@link ZipFile}.
- * It will take the special cases mentioned above into account and thus result
- * in a valid directory structure even if the original files or directories
- * contain slash characters.
+ * This class provides basic means to re-build the directory tree hierarchy of
+ * the original files and directories from {@link FileHeader}s read from a
+ * {@link ZipFile}.
  *
  * @see <a href=
  *      "https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT">4.4.17
@@ -42,113 +29,121 @@ import net.lingala.zip4j.model.FileHeader;
  *      Current minimum feature versions are as defined below</a>
  * 
  */
-public class TreeBuilder {
+@SuppressWarnings("static-method")
+public abstract class TreeBuilder {
+
+	/**
+	 * The default comparator used to order {@link FileHeader}.
+	 *
+	 * @see TreeBuilder#sort(List)
+	 */
+	private static final Comparator<FileHeader> FILE_NAME_COMPARATOR = new Comparator<FileHeader>() {
+		@Override
+		public int compare(final FileHeader arg0, final FileHeader arg1) {
+			return arg0.getFileName().compareTo(arg1.getFileName());
+		}
+	};
+
 	/**
 	 * Structures the given fileHeaders into a tree hierarchy.
 	 * <p>
 	 * If the given list contains the same {@link FileHeader} multiple times or if
-	 * multiple {@link FileHeader}s have the same value returned by
-	 * {@link FileHeader#getFileName()} then these {@link FileHeader}s will
+	 * multiple {@link FileHeader}s return the same values for the data relevant for
+	 * the sorting and grouping then then these {@link FileHeader}s will be
 	 * positioned as siblings in the hierarchy.
 	 * <p>
-	 * If {@link FileHeader#getFileName()} returns an empty string the
-	 * {@link FileHeader} will be positioned at the root level.
+	 * It is crucial that all ZIP entries that are directories and play a role (as
+	 * parent or child directory) in the desired tree are present, otherwise files
+	 * may be nested in the wrong directory.
+	 * <p>
+	 * Changing the {@link FileHeader}s after creating the tree may invalidate the
+	 * tree.
 	 *
-	 * @param fileHeaders            It is crucial that all ZIP entries that are
-	 *                               directories and play a role (as parent or child
-	 *                               directory) in the resulting tree are present,
-	 *                               otherwise files may be nested in the wrong
-	 *                               directory. Changing the {@link FileHeader}s
-	 *                               after creating the tree may invalidate the
-	 *                               tree.
-	 * @param estimatedRootNodeCount The initial internal size of the returned
-	 *                               {@link List}. Will grow if necessary.
-	 * @return The root nodes (those without parent) of the tree.
+	 * @param fileHeaders The {@link FileHeader}s to build a tree from.
+	 * @return The root nodes (those without parent) of the tree. The returned tree
+	 *         may contain {@link TreeNode#getPayload()}s with <code>null</code> as
+	 *         value. This is the result from single {@link FileHeader}s that denote
+	 *         multiple directories. In this case only the lowest {@link TreeNode}
+	 *         will contain that {@link FileHeader}.
 	 * @throws NullPointerException Neither the given {@link List} nor its
-	 *                              {@link FileHeader} items nor the values returned
-	 *                              by their {@link FileHeader#getFileName()} must
-	 *                              be <code>null</code>.
+	 *                              {@link FileHeader} items must be
+	 *                              <code>null</code>.
 	 */
-	public List<? extends TreeNode> createTreeFromUnsorted(final List<FileHeader> fileHeaders,
-			final int estimatedRootNodeCount) throws NullPointerException {
+	public List<? extends TreeNode> createTreeFromUnsorted(final List<FileHeader> fileHeaders)
+			throws NullPointerException {
 		sort(fileHeaders);
-		return createTreeFromSorted(fileHeaders, estimatedRootNodeCount);
+		return createTreeFromSorted(fileHeaders);
 	}
 
 	/**
-	 * Like {@link #createTreeFromUnsorted(List,int)} but assumes the given
-	 * {@link List} was already sorted by the values returned by
-	 * {@link FileHeader#getFileName()} (natural String order with the shortest
-	 * values as first element and the longest as last).
+	 * Like {@link #createTreeFromUnsorted(List)} but assumes the given {@link List}
+	 * was already sorted so that the direct children of a directory follow directly
+	 * after that directory.
+	 * <p>
+	 * Using this information the list can be looped exactly one time. Each item is
+	 * added to the most recent directory found that is deemed a valid parent by
+	 * {@link #isValidParent}.
 	 *
-	 * @param fileHeaders
-	 * @param estimatedRootNodeCount
+	 * @param fileHeaders The sorted {@link FileHeader}s.
 	 *
-	 * @return
+	 * @return The root nodes (those without parent) of the tree.
 	 *
-	 * @see #createTreeFromUnsorted(List,int)
+	 * @see #createTreeFromUnsorted(List)
 	 */
-	@SuppressWarnings("javadoc")
-	public List<? extends TreeNode> createTreeFromSorted(final List<FileHeader> fileHeaders,
-			final int estimatedRootNodeCount) {
+	protected List<? extends TreeNode> createTreeFromSorted(final List<FileHeader> fileHeaders) {
 		final int fileHeadersCount = Objects.requireNonNull(fileHeaders).size();
-		final List<TreeNode> rootNodes = new ArrayList<>(estimatedRootNodeCount);
-		/*
-		 * The given fileHeaders list is assumed to be sorted by the fileNames of the
-		 * contained FileHeaders. Because the fileName is the full path in the ZIP file,
-		 * the entries inside a directory always follow directly after that directory in
-		 * the list.
-		 *
-		 * Using this information the list can be looped exactly one time. Each item is
-		 * added to the most recent directory found whose fileName matches the start of
-		 * the current item.
-		 */
-		TreeNode currentParent = null;
+		final TreeNode rootNode = new TreeNode();
+
+		TreeNode previousNode = rootNode;
 		for (int i = 0; i < fileHeadersCount; i++) {
 			final FileHeader currentFileHeader = Objects.requireNonNull(fileHeaders.get(i));
-			final String currentFileHeaderName = Objects.requireNonNull(currentFileHeader.getFileName());
-			final TreeNode currentNode = new TreeNode(currentFileHeader);
-
-			/*
-			 * Find the most recent directory whose fileName matches the start of the
-			 * current item by moving up in the directory hierarchy until a match is found
-			 * or the root directory (null) is reached.
-			 */
-			while (currentParent != null
-					&& !currentFileHeaderName.startsWith(currentParent.getPayload().getFileName())) {
-				currentParent = currentParent.getParent();
+			final boolean isDirectory = currentFileHeader.isDirectory();
+			final String path = currentFileHeader.getFileName();
+			final TreeNode currentNode = new TreeNode(currentFileHeader, isDirectory, path);
+			TreeNode validParent = this.findParent(previousNode, currentNode);
+			if (validParent == null) {
+				validParent = rootNode;
 			}
-
+			final TreeNode directChildInValidParent = addAsChild(validParent, currentNode);
 			/*
-			 * If we reached the root directory level with the previous while loop we add
-			 * the current item to the list of root entries. Otherwise we add it to the
-			 * parent found in the previous loop.
+			 * Even though we add children to the rootNode, we do not set the rootNode as
+			 * parent of anything, because it is only temporary (see return statement).
 			 */
-			if (currentParent == null) {
-				rootNodes.add(currentNode);
-			} else {
-				currentParent.addChild(currentNode);
-				currentNode.setParent(currentParent);
+			if (validParent == rootNode) {
+				directChildInValidParent.setParent(null);
 			}
-
-			/*
-			 * Only items that are directory entries are set as parent. It is ok to just set
-			 * the current item as parent here even if we do not know if the following item
-			 * will be inside the current item or a sibling of the current item. If the
-			 * latter is the case the while loop will simply move up in the directory
-			 * hierarchy until the correct parent directory is found again and sets it as
-			 * parent.
-			 */
-			if (currentFileHeader.isDirectory()) {
-				currentParent = currentNode;
-			}
+			previousNode = currentNode;
 		}
-		return rootNodes;
+
+		assert rootNode.getChildren().stream().allMatch(node -> node.getParent() == null);
+		return rootNode.getChildren();
+	}
+
+	/**
+	 * Find the nearest parent directory that is considered a parent of the
+	 * childNode. Starts with the parentNode.
+	 *
+	 * @param parentNode The first {@link TreeNode} to consider as a parent. If it
+	 *                   is not a valid parent of the childNode than the parent of
+	 *                   the parentNode will be considered and so on.
+	 * @param childNode  The {@link TreeNode} to find a valid parent for.
+	 * @return A valid parent for the childNode or <code>null</code> if the root
+	 *         level was reached without finding a valid parent.
+	 */
+	protected TreeNode findParent(final TreeNode parentNode, final TreeNode childNode) {
+		TreeNode newParent = parentNode;
+		while (newParent != null && !isValidParent(newParent, childNode)) {
+			newParent = newParent.getParent();
+		}
+		return newParent;
 	}
 
 	/**
 	 * Sorts the given list by the value returned by
-	 * {@link FileHeader#getFileName()}.
+	 * {@link FileHeader#getFileName()} (natural String order with the shortest
+	 * values as first element and the longest as last). Because the fileName is the
+	 * full path in the ZIP file, for most use cases the entries inside a directory
+	 * will follow directly after that directory in the sorted list.
 	 * <p>
 	 * The sort algorithm used is the default of {@link List#sort(Comparator)} which
 	 * is based on TimSort and well suited for this use case as it is an adaptive
@@ -165,11 +160,41 @@ public class TreeBuilder {
 	 * @see List#sort(Comparator)
 	 */
 	protected void sort(final List<FileHeader> fileHeaders) throws NullPointerException {
-		fileHeaders.sort(new Comparator<FileHeader>() {
-			@Override
-			public int compare(final FileHeader arg0, final FileHeader arg1) {
-				return arg0.getFileName().compareTo(arg1.getFileName());
-			}
-		});
+		fileHeaders.sort(FILE_NAME_COMPARATOR);
 	}
+
+	/**
+	 * Tests if the given parentNode is a valid parent for the given childNode.
+	 *
+	 * @param parentNode The {@link TreeNode} to use as potential parent of the
+	 *                   given childNode. <code>null</code> as value of
+	 *                   {@link TreeNode#getParent()} indicates a root node.
+	 * @param childNode  The {@link TreeNode} to use as potential child in the given
+	 *                   parent.
+	 * @return true if the parentNode is a valid parent for the given childNode.
+	 *         false otherwise.
+	 */
+	protected abstract boolean isValidParent(final TreeNode parentNode, final TreeNode childNode);
+
+	/**
+	 * Adds the given childNode into the given parentNode.
+	 * <p>
+	 * The childNode is not necessarily added as a direct child to the parentNode.
+	 * It may create additional {@link TreeNode}s if necessary to add itself as a
+	 * child inside a child of the parentNode. However it will be added as a
+	 * (sub)child inside the parentNode nonetheless, it will <strong>not</strong> be
+	 * added into the same level as the parentNode or higher up in the hierarchy.
+	 * <p>
+	 * The method is also responsible to set the
+	 * {@link TreeNode#setParent(TreeNode)} correctly.
+	 *
+	 * @param parentNode The {@link TreeNode} deemed a valid parent fort the
+	 *                   childNode. Must not be <code>null</code>.
+	 * @param childNode  The {@link TreeNode} deemed a valid child or sub child of
+	 *                   the parentNode. Must not be <code>null</code>.
+	 * @return The {@link TreeNode} that was placed directly as a child in the
+	 *         parentNode.
+	 */
+	protected abstract TreeNode addAsChild(final TreeNode parentNode, final TreeNode childNode);
+
 }

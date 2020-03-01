@@ -17,7 +17,7 @@ import net.lingala.zip4j.model.FileHeader;
 @SuppressWarnings({ "static-method", "javadoc" })
 public class TreeBuilderTest {
 
-	private static final TreeBuilder TREE_BUILDER = new TreeBuilder();
+	private static final TreeBuilder TREE_BUILDER = new DirectoryFlagTreeBuilder();
 
 	@Test
 	public void testZipFileAssumptions() throws ZipException {
@@ -38,7 +38,7 @@ public class TreeBuilderTest {
 	public void testCreateTreeFromFileHeadersWithZip() throws ZipException {
 		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
 		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
-		final List<? extends TreeNode> rootNodes = TREE_BUILDER.createTreeFromUnsorted(fileHeaders, 16);
+		final List<? extends TreeNode> rootNodes = TREE_BUILDER.createTreeFromUnsorted(fileHeaders);
 		assertEquals(5, rootNodes.size());
 		final TreeNode d1 = rootNodes.get(2);
 		final TreeNode f3 = d1.getChildren().get(0);
@@ -69,7 +69,7 @@ public class TreeBuilderTest {
 		final FileHeader fileHeader = fileHeaders.get(1);
 		assertTrue(fileHeader.isDirectory());
 		fileHeader.setFileName(null);
-		TREE_BUILDER.createTreeFromUnsorted(fileHeaders, 16);
+		TREE_BUILDER.createTreeFromUnsorted(fileHeaders);
 		fail();
 	}
 
@@ -84,7 +84,7 @@ public class TreeBuilderTest {
 		final FileHeader fileHeader = fileHeaders.get(0);
 		assertFalse(fileHeader.isDirectory());
 		fileHeader.setFileName(null);
-		TREE_BUILDER.createTreeFromUnsorted(fileHeaders, 16);
+		TREE_BUILDER.createTreeFromUnsorted(fileHeaders);
 		fail();
 	}
 
@@ -96,6 +96,7 @@ public class TreeBuilderTest {
 	protected static void checkAssumption(final TreeNode node, final boolean isDir, final String name,
 			final int childrenCount, final TreeNode parent) {
 		checkAssumption(node.getPayload(), isDir, name);
+		assertTrue(isDir == node.isDirectory());
 		assertEquals(childrenCount, node.getChildren().size());
 		assertSame(parent, node.getParent());
 	}
