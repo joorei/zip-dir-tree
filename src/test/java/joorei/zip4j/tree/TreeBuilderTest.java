@@ -17,7 +17,7 @@ import net.lingala.zip4j.model.FileHeader;
 @SuppressWarnings({ "static-method", "javadoc" })
 public class TreeBuilderTest {
 
-	private static final TreeBuilder TREE_BUILDER = new DirectoryFlagTreeBuilder();
+	private static final DirectoryFlagTreeBuilder TREE_BUILDER = new DirectoryFlagTreeBuilder();
 
 	@Test
 	public void testZipFileAssumptions() throws ZipException {
@@ -38,7 +38,11 @@ public class TreeBuilderTest {
 	public void testCreateTreeFromFileHeadersWithZip() throws ZipException {
 		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
 		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
-		final List<? extends TreeNode> rootNodes = TREE_BUILDER.createTreeFromUnsorted(fileHeaders);
+		final TreeNode rootNode = TREE_BUILDER.createTreeFromUnsorted(fileHeaders);
+		assertSame(null, rootNode.getParent());
+		assertSame("", rootNode.getPath());
+		assertSame(null, rootNode.getPayload());
+		final List<? extends TreeNode> rootNodes = rootNode.getChildren();
 		assertEquals(5, rootNodes.size());
 		final TreeNode d1 = rootNodes.get(2);
 		final TreeNode f3 = d1.getChildren().get(0);
@@ -48,14 +52,14 @@ public class TreeBuilderTest {
 		final TreeNode f0 = d1.getChildren().get(2);
 		final TreeNode f5 = rootNodes.get(3);
 		final TreeNode f6 = rootNodes.get(4);
-		checkAssumption(d1, true, ZipTestFileCreator.DIR_D1, 3, null);
+		checkAssumption(d1, true, ZipTestFileCreator.DIR_D1, 3, rootNode);
 		checkAssumption(f0, false, ZipTestFileCreator.FILE_F0, 0, d1);
-		checkAssumption(f1, false, ZipTestFileCreator.FILE_F1, 0, null);
-		checkAssumption(f2, false, ZipTestFileCreator.FILE_F2, 0, null);
+		checkAssumption(f1, false, ZipTestFileCreator.FILE_F1, 0, rootNode);
+		checkAssumption(f2, false, ZipTestFileCreator.FILE_F2, 0, rootNode);
 		checkAssumption(f3, false, ZipTestFileCreator.FILE_F3, 0, d1);
 		checkAssumption(f4, false, ZipTestFileCreator.FILE_F4, 0, d1);
-		checkAssumption(f5, false, ZipTestFileCreator.FILE_F5, 0, null);
-		checkAssumption(f6, false, ZipTestFileCreator.FILE_F6, 0, null);
+		checkAssumption(f5, false, ZipTestFileCreator.FILE_F5, 0, rootNode);
+		checkAssumption(f6, false, ZipTestFileCreator.FILE_F6, 0, rootNode);
 	}
 
 	/**

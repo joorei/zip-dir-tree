@@ -21,7 +21,7 @@ import net.lingala.zip4j.model.FileHeader;
  * This implementation is mutable. {@link #children}, {@link #payload} and
  * {@link #parent} are exposed to the outside and can be changed at any time.
  */
-public class TreeNode {
+public class TreeNode implements TreeNodeInterface<TreeNode> {
 	/**
 	 * The content wrapped by this node. May be <code>null</code>.
 	 */
@@ -125,6 +125,7 @@ public class TreeNode {
 	 * @return The value set as {@link #parent}. May be <code>null</code> if this
 	 *         node is a root node.
 	 */
+	@Override
 	public TreeNode getParent() {
 		return this.parent;
 	}
@@ -147,7 +148,7 @@ public class TreeNode {
 	 * @return The children of this node. May be empty if no children exist. Neither
 	 *         the {@link List} nor its elements can be <code>null</code>.
 	 */
-	public List<? extends TreeNode> getChildren() {
+	public List<TreeNode> getChildren() {
 		assert this.directory || (this.children == null || this.children.size() == 0) : this.children.size();
 		return this.children == null ? Collections.emptyList() : this.children;
 	}
