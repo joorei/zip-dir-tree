@@ -80,8 +80,8 @@ public class TreeNode implements TreeNodeInterface<TreeNode> {
 	}
 
 	/**
-	 * Create a root node (directory) without payload and with an empty string as
-	 * path.
+	 * Create a root node (directory) with <code>null</code> as {@link #payload} and
+	 * with an empty string as path.
 	 */
 	public TreeNode() {
 		this.payload = null;
