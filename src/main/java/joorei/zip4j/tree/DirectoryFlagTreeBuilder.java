@@ -41,7 +41,7 @@ public class DirectoryFlagTreeBuilder extends PathSeparatorTreeBuilder {
 	 * parentNode can't be a valid parent if it is not a directory.
 	 */
 	@Override
-	public boolean isValidParent(TreeNode parentNode, TreeNode childNode) {
+	public boolean isValidParent(final TreeNode parentNode, final TreeNode childNode) {
 		return parentNode.isDirectory() && super.isValidParent(parentNode, childNode);
 	}
 
