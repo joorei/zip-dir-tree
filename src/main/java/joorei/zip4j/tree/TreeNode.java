@@ -145,10 +145,7 @@ public class TreeNode {
 	 *         and without the trailing '/' if {@link #directory} is true.
 	 */
 	public String getBasename() {
-		if (this.parent == null) {
-			return this.path;
-		}
-		return getBasename(this.parent.getPath());
+		return getBasename(this.parent == null ? "" : this.parent.getPath());
 	}
 
 	/**
