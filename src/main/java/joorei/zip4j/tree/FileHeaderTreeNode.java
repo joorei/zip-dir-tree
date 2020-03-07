@@ -21,7 +21,7 @@ import net.lingala.zip4j.model.FileHeader;
  * This implementation is mutable. {@link #children}, {@link #payload} and
  * {@link #parent} are exposed to the outside and can be changed at any time.
  */
-public class TreeNode implements TreeNodeInterface<TreeNode> {
+public class FileHeaderTreeNode implements TreeNodeInterface<FileHeaderTreeNode> {
 	/**
 	 * The content wrapped by this node. May be <code>null</code>.
 	 */
@@ -33,13 +33,13 @@ public class TreeNode implements TreeNodeInterface<TreeNode> {
 	 * be <code>null</code> but the class will not prevent adding
 	 * <code>null</code>-values.
 	 */
-	private List<TreeNode> children = null;
+	private List<FileHeaderTreeNode> children = null;
 
 	/**
 	 * The parent node of this node. Will be <code>null</code> if no parent was
 	 * found yet or this is a root node.
 	 */
-	private TreeNode parent = null;
+	private FileHeaderTreeNode parent = null;
 
 	/**
 	 * true if this instance is a directory and thus may contain children. false
@@ -60,7 +60,7 @@ public class TreeNode implements TreeNodeInterface<TreeNode> {
 	 * @param thePath     Value to set as {@link #path}. Must not be
 	 *                    <code>null</code>.
 	 */
-	public TreeNode(final FileHeader thePayload, final boolean isDirectory, final String thePath) {
+	public FileHeaderTreeNode(final FileHeader thePayload, final boolean isDirectory, final String thePath) {
 		this.payload = thePayload;
 		this.directory = isDirectory;
 		this.path = Objects.requireNonNull(thePath);
@@ -75,7 +75,7 @@ public class TreeNode implements TreeNodeInterface<TreeNode> {
 	 *                   {@link FileHeader#isDirectory()}.
 	 * @throws NullPointerException If thePayload is <code>null</code>.
 	 */
-	public TreeNode(final FileHeader thePayload) throws NullPointerException {
+	public FileHeaderTreeNode(final FileHeader thePayload) throws NullPointerException {
 		this(thePayload, thePayload.isDirectory(), thePayload.getFileName());
 	}
 
@@ -83,7 +83,7 @@ public class TreeNode implements TreeNodeInterface<TreeNode> {
 	 * Create a root node (directory) with <code>null</code> as {@link #payload} and
 	 * with an empty string as path.
 	 */
-	public TreeNode() {
+	public FileHeaderTreeNode() {
 		this.payload = null;
 		this.directory = true;
 		this.path = "";
@@ -101,7 +101,7 @@ public class TreeNode implements TreeNodeInterface<TreeNode> {
 	 *                  <code>null</code>.
 	 * @throws NullPointerException Thrown if childNode is <code>null</code>.
 	 */
-	public void addChild(final TreeNode childNode) throws NullPointerException {
+	public void addChild(final FileHeaderTreeNode childNode) throws NullPointerException {
 		if (!this.directory) {
 			throw new UnsupportedOperationException("non directories can't have children");
 		}
@@ -115,7 +115,7 @@ public class TreeNode implements TreeNodeInterface<TreeNode> {
 	 * @param theParent The value to set as {@link #parent}. May be
 	 *                  <code>null</code> to make this node a root node.
 	 */
-	public void setParent(final TreeNode theParent) {
+	public void setParent(final FileHeaderTreeNode theParent) {
 		assert theParent != this;
 		assert theParent == null || this.path.startsWith(theParent.getPath()) : theParent.getPath() + " | " + this.path;
 		this.parent = theParent;
@@ -126,7 +126,7 @@ public class TreeNode implements TreeNodeInterface<TreeNode> {
 	 *         node is a root node.
 	 */
 	@Override
-	public TreeNode getParent() {
+	public FileHeaderTreeNode getParent() {
 		return this.parent;
 	}
 
@@ -148,7 +148,7 @@ public class TreeNode implements TreeNodeInterface<TreeNode> {
 	 * @return The children of this node. May be empty if no children exist. Neither
 	 *         the {@link List} nor its elements can be <code>null</code>.
 	 */
-	public List<TreeNode> getChildren() {
+	public List<FileHeaderTreeNode> getChildren() {
 		assert this.directory || (this.children == null || this.children.size() == 0) : this.children.size();
 		return this.children == null ? Collections.emptyList() : this.children;
 	}

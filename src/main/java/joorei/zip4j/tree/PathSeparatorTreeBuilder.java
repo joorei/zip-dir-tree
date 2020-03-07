@@ -31,10 +31,10 @@ import net.lingala.zip4j.util.InternalZipConstants;
  * parent or child directory) in the desired tree are present, otherwise files
  * may be nested in the wrong directory.
  * <p>
- * The returned tree may contain {@link TreeNode#getPayload()}s with
+ * The returned tree may contain {@link FileHeaderTreeNode#getPayload()}s with
  * <code>null</code> as value. This is the result from single
  * {@link FileHeader}s that denote multiple directories. In this case only the
- * lowest {@link TreeNode} will contain that {@link FileHeader}.
+ * lowest {@link FileHeaderTreeNode} will contain that {@link FileHeader}.
  *
  * @see <a href=
  *      "https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT">4.4.17
@@ -43,7 +43,7 @@ import net.lingala.zip4j.util.InternalZipConstants;
  *      "https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT">4.4.3.2
  *      Current minimum feature versions are as defined below</a>
  */
-public class PathSeparatorTreeBuilder extends TreeBuilder<FileHeader, TreeNode> {
+public class PathSeparatorTreeBuilder extends TreeBuilder<FileHeader, FileHeaderTreeNode> {
 	/**
 	 * The default comparator used to order {@link FileHeader}.
 	 *
@@ -63,7 +63,7 @@ public class PathSeparatorTreeBuilder extends TreeBuilder<FileHeader, TreeNode> 
 	 * {@link InternalZipConstants#ZIP_FILE_SEPARATOR}.
 	 */
 	@Override
-	public boolean isValidParent(final TreeNode parentNode, final TreeNode childNode) {
+	public boolean isValidParent(final FileHeaderTreeNode parentNode, final FileHeaderTreeNode childNode) {
 		return parentNode.getPath().endsWith(InternalZipConstants.ZIP_FILE_SEPARATOR)
 				&& childNode.getPath().startsWith(parentNode.getPath());
 	}
@@ -72,13 +72,14 @@ public class PathSeparatorTreeBuilder extends TreeBuilder<FileHeader, TreeNode> 
 	 * This method assumes that childNodes that contains
 	 * {@link InternalZipConstants#ZIP_FILE_SEPARATOR} in their "filename" actually
 	 * denote additional directories, even if no {@link FileHeader} exists for
-	 * these. It will thus create additional {@link TreeNode} to reflect the full
-	 * path and connects the highest one as child inside the given parentNode while
-	 * positioning itself at the lowest level of these new {@link TreeNode}s.
+	 * these. It will thus create additional {@link FileHeaderTreeNode} to reflect
+	 * the full path and connects the highest one as child inside the given
+	 * parentNode while positioning itself at the lowest level of these new
+	 * {@link FileHeaderTreeNode}s.
 	 */
 	@Override
-	public TreeNode addAsChild(final TreeNode parentNode, final TreeNode childNode) {
-		TreeNode currentChild = childNode;
+	public FileHeaderTreeNode addAsChild(final FileHeaderTreeNode parentNode, final FileHeaderTreeNode childNode) {
+		FileHeaderTreeNode currentChild = childNode;
 		// get the path of the childNode without the stuff that is already in the
 		// parentNode and re-add a trailing slash
 		String childPath = childNode.getBasename(parentNode.getPath()).concat(InternalZipConstants.ZIP_FILE_SEPARATOR);
@@ -91,7 +92,7 @@ public class PathSeparatorTreeBuilder extends TreeBuilder<FileHeader, TreeNode> 
 			// trailing '/'
 			childPath = childPath.substring(0, slashIndex + 1);
 			// create a new node and set its values
-			final TreeNode newParent = new TreeNode(null, true, parentNode.getPath() + childPath);
+			final FileHeaderTreeNode newParent = new FileHeaderTreeNode(null, true, parentNode.getPath() + childPath);
 			newParent.addChild(currentChild);
 			currentChild.setParent(newParent);
 			currentChild = newParent;
@@ -128,12 +129,12 @@ public class PathSeparatorTreeBuilder extends TreeBuilder<FileHeader, TreeNode> 
 	}
 
 	@Override
-	protected TreeNode createTreeNode(final FileHeader payload) {
-		return new TreeNode(payload);
+	protected FileHeaderTreeNode createTreeNode(final FileHeader payload) {
+		return new FileHeaderTreeNode(payload);
 	}
 
 	@Override
-	protected TreeNode getRootNode() {
-		return new TreeNode();
+	protected FileHeaderTreeNode getRootNode() {
+		return new FileHeaderTreeNode();
 	}
 }

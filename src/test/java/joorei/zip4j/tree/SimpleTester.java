@@ -25,7 +25,7 @@ public class SimpleTester {
 		final long startFileHeaderSorting = System.currentTimeMillis();
 		TREE_BUILDER.sort(fileHeaders);
 		final long startFileHeaderStructuring = System.currentTimeMillis();
-		final List<? extends TreeNode> rootNodes = TREE_BUILDER.createTreeFromSorted(fileHeaders).getChildren();
+		final List<? extends FileHeaderTreeNode> rootNodes = TREE_BUILDER.createTreeFromSorted(fileHeaders).getChildren();
 		final long endTime = System.currentTimeMillis();
 		final long timeToSortFileHeaders = startFileHeaderStructuring - startFileHeaderSorting;
 		final long timeToStructureFileHeaders = endTime - startFileHeaderStructuring;
@@ -39,7 +39,7 @@ public class SimpleTester {
 		System.out.println("Number of directory levels (counting ZIP root as directory): " + maxDepth);
 	}
 
-	public static int getMaxDepth(final Collection<? extends TreeNode> nodes) {
+	public static int getMaxDepth(final Collection<? extends FileHeaderTreeNode> nodes) {
 		return nodes.stream().mapToInt(node -> getMaxDepth(node.getChildren()) + 1).max().orElse(1);
 	}
 }

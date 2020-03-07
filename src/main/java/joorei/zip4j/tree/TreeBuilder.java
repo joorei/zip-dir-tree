@@ -83,10 +83,10 @@ public abstract class TreeBuilder<E, N extends TreeNodeInterface<N>> {
 	 * Find the nearest parent element that is considered a parent of the child
 	 * node. Starts with the given parent node.
 	 *
-	 * @param parentNode The first {@link TreeNode} to consider as a parent. If it
-	 *                   is not a valid parent of the child node than its parent
-	 *                   node will be considered and so on.
-	 * @param childNode  The {@link TreeNode} to find a valid parent for.
+	 * @param parentNode The first {@link FileHeaderTreeNode} to consider as a
+	 *                   parent. If it is not a valid parent of the child node than
+	 *                   its parent node will be considered and so on.
+	 * @param childNode  The {@link FileHeaderTreeNode} to find a valid parent for.
 	 * @return A parent node deemed valid for the child node by
 	 *         {@link #isValidParent(TreeNodeInterface, TreeNodeInterface)} or the
 	 *         root node (the node without a parent node) if none other was valid.
@@ -138,12 +138,12 @@ public abstract class TreeBuilder<E, N extends TreeNodeInterface<N>> {
 	 * The method is also responsible to set the parent of the child correctly if
 	 * such thing is necessary.
 	 *
-	 * @param parentNode The {@link TreeNode} deemed a valid parent fort the
-	 *                   childNode. Must not be <code>null</code>.
-	 * @param childNode  The {@link TreeNode} deemed a valid child or sub child of
-	 *                   the parentNode. Must not be <code>null</code>.
-	 * @return The {@link TreeNode} that was placed directly as a child in the
-	 *         parentNode.
+	 * @param parentNode The {@link FileHeaderTreeNode} deemed a valid parent fort
+	 *                   the childNode. Must not be <code>null</code>.
+	 * @param childNode  The {@link FileHeaderTreeNode} deemed a valid child or sub
+	 *                   child of the parentNode. Must not be <code>null</code>.
+	 * @return The {@link FileHeaderTreeNode} that was placed directly as a child in
+	 *         the parentNode.
 	 */
 	protected abstract N addAsChild(final N parentNode, final N childNode);
 }

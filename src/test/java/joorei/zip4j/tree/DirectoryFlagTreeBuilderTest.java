@@ -38,20 +38,20 @@ public class DirectoryFlagTreeBuilderTest {
 	public void testCreateTreeFromFileHeadersWithZip() throws ZipException {
 		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
 		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
-		final TreeNode rootNode = TREE_BUILDER.createTreeFromUnsorted(fileHeaders);
+		final FileHeaderTreeNode rootNode = TREE_BUILDER.createTreeFromUnsorted(fileHeaders);
 		assertSame(null, rootNode.getParent());
 		assertSame("", rootNode.getPath());
 		assertSame(null, rootNode.getPayload());
-		final List<? extends TreeNode> rootNodes = rootNode.getChildren();
+		final List<? extends FileHeaderTreeNode> rootNodes = rootNode.getChildren();
 		assertEquals(5, rootNodes.size());
-		final TreeNode d1 = rootNodes.get(2);
-		final TreeNode f3 = d1.getChildren().get(0);
-		final TreeNode f2 = rootNodes.get(1);
-		final TreeNode f1 = rootNodes.get(0);
-		final TreeNode f4 = d1.getChildren().get(1);
-		final TreeNode f0 = d1.getChildren().get(2);
-		final TreeNode f5 = rootNodes.get(3);
-		final TreeNode f6 = rootNodes.get(4);
+		final FileHeaderTreeNode d1 = rootNodes.get(2);
+		final FileHeaderTreeNode f3 = d1.getChildren().get(0);
+		final FileHeaderTreeNode f2 = rootNodes.get(1);
+		final FileHeaderTreeNode f1 = rootNodes.get(0);
+		final FileHeaderTreeNode f4 = d1.getChildren().get(1);
+		final FileHeaderTreeNode f0 = d1.getChildren().get(2);
+		final FileHeaderTreeNode f5 = rootNodes.get(3);
+		final FileHeaderTreeNode f6 = rootNodes.get(4);
 		checkAssumption(d1, true, ZipTestFileCreator.DIR_D1, 3, rootNode);
 		checkAssumption(f0, false, ZipTestFileCreator.FILE_F0, 0, d1);
 		checkAssumption(f1, false, ZipTestFileCreator.FILE_F1, 0, rootNode);
@@ -97,8 +97,8 @@ public class DirectoryFlagTreeBuilderTest {
 		assertEquals(name, fileHeader.getFileName());
 	}
 
-	protected static void checkAssumption(final TreeNode node, final boolean isDir, final String name,
-			final int childrenCount, final TreeNode parent) {
+	protected static void checkAssumption(final FileHeaderTreeNode node, final boolean isDir, final String name,
+			final int childrenCount, final FileHeaderTreeNode parent) {
 		checkAssumption(node.getPayload(), isDir, name);
 		assertTrue(isDir == node.isDirectory());
 		assertEquals(childrenCount, node.getChildren().size());
