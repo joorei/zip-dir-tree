@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>joorei</groupId>
 	<artifactId>zip-dir-tree</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0</version>
 	<name>zip4j-dir-tree</name>
 	<description>Provides the means to build the directory tree of a ZIP file.</description>
 
@@ -17,7 +17,7 @@
 		<dependency>
 			<groupId>net.lingala.zip4j</groupId>
 			<artifactId>zip4j</artifactId>
-			<version>2.3.1</version>
+			<version>2.4.0</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
