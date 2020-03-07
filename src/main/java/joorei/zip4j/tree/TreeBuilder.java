@@ -83,16 +83,17 @@ public abstract class TreeBuilder<E, N extends TreeNodeInterface<N>> {
 	 * Find the nearest parent element that is considered a parent of the child
 	 * node. Starts with the given parent node.
 	 *
-	 * @param parentNode The first {@link TreeNode} to consider as a parent.
-	 *                   If it is not a valid parent of the child node than the
-	 *                   parent of the parent node will be considered and so on.
+	 * @param parentNode The first {@link TreeNode} to consider as a parent. If it
+	 *                   is not a valid parent of the child node than its parent
+	 *                   node will be considered and so on.
 	 * @param childNode  The {@link TreeNode} to find a valid parent for.
-	 * @return A valid parent for the child node or <code>null</code> if the root
-	 *         level was reached without finding a valid parent.
+	 * @return A parent node deemed valid for the child node by
+	 *         {@link #isValidParent(TreeNodeInterface, TreeNodeInterface)} or the
+	 *         root node (the node without a parent node) if none other was valid.
 	 */
 	protected N findParent(final N parentNode, final N childNode) {
 		N newParent = parentNode;
-		while (newParent != null && !isValidParent(newParent, childNode)) {
+		while (newParent.getParent() != null && !isValidParent(newParent, childNode)) {
 			newParent = newParent.getParent();
 		}
 		return newParent;
@@ -115,8 +116,9 @@ public abstract class TreeBuilder<E, N extends TreeNodeInterface<N>> {
 	 * Tests if the given parent node is a valid parent for the given child node.
 	 *
 	 * @param parentNode The node to use as potential parent of the given child
-	 *                   node. <code>null</code> as value of
-	 *                   {@link TreeNodeInterface#getParent()} indicates a root node.
+	 *                   node. Will never be a root node (<code>null</code> as value
+	 *                   of {@link TreeNodeInterface#getParent()}) as such is always
+	 *                   considered a valid parent.
 	 * @param childNode  The node to use as potential child in the given parent.
 	 * @return true if the parentNode is a valid parent for the given child node.
 	 *         false otherwise.
@@ -127,18 +129,19 @@ public abstract class TreeBuilder<E, N extends TreeNodeInterface<N>> {
 	 * Adds the given child node into the given parent node.
 	 * <p>
 	 * The childNode is not necessarily added as a direct child to the parent node.
-	 * It may create additional {@link TreeNodeInterface}s if necessary to add itself as a
-	 * child inside a child of the parentNode. However it will be added as a
-	 * (sub)child inside the parentNode nonetheless, it will <strong>not</strong> be
-	 * added into the same level as the parent node or higher up in the hierarchy.
+	 * It may create additional {@link TreeNodeInterface}s if necessary to add
+	 * itself as a child inside a child of the parentNode. However it will be added
+	 * as a (sub)child inside the parentNode nonetheless, it will
+	 * <strong>not</strong> be added into the same level as the parent node or
+	 * higher up in the hierarchy.
 	 * <p>
 	 * The method is also responsible to set the parent of the child correctly if
 	 * such thing is necessary.
 	 *
 	 * @param parentNode The {@link TreeNode} deemed a valid parent fort the
 	 *                   childNode. Must not be <code>null</code>.
-	 * @param childNode  The {@link TreeNode} deemed a valid child or sub
-	 *                   child of the parentNode. Must not be <code>null</code>.
+	 * @param childNode  The {@link TreeNode} deemed a valid child or sub child of
+	 *                   the parentNode. Must not be <code>null</code>.
 	 * @return The {@link TreeNode} that was placed directly as a child in the
 	 *         parentNode.
 	 */
