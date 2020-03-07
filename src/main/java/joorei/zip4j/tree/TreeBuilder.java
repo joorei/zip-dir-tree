@@ -3,8 +3,8 @@ package joorei.zip4j.tree;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.zip.ZipFile;
 
+import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.FileHeader;
 
 /**
