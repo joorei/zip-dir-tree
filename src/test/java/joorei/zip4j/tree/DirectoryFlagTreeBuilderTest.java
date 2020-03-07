@@ -15,7 +15,7 @@ import net.lingala.zip4j.model.FileHeader;
  * Test {@link TreeBuilder}
  */
 @SuppressWarnings({ "static-method", "javadoc" })
-public class TreeBuilderTest {
+public class DirectoryFlagTreeBuilderTest {
 
 	private static final DirectoryFlagTreeBuilder TREE_BUILDER = new DirectoryFlagTreeBuilder();
 
