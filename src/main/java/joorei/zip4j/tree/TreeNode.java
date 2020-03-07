@@ -68,6 +68,18 @@ public class TreeNode {
 	}
 
 	/**
+	 * @param thePayload The payload to set as {@link #payload}. Must not be
+	 *                   <code>null</code>. The values for {@link #path} and
+	 *                   {@link #directory} are read directly from
+	 *                   {@link FileHeader#getFileName()} and
+	 *                   {@link FileHeader#isDirectory()}.
+	 * @throws NullPointerException If thePayload is <code>null</code>.
+	 */
+	public TreeNode(final FileHeader thePayload) throws NullPointerException {
+		this(thePayload, thePayload.isDirectory(), thePayload.getFileName());
+	}
+
+	/**
 	 * Create a root node (directory) without payload and with an empty string as
 	 * path.
 	 */

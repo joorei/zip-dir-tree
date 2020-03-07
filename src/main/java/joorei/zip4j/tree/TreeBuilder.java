@@ -97,9 +97,7 @@ public abstract class TreeBuilder {
 		TreeNode previousNode = rootNode;
 		for (int i = 0; i < fileHeadersCount; i++) {
 			final FileHeader currentFileHeader = Objects.requireNonNull(fileHeaders.get(i));
-			final boolean isDirectory = currentFileHeader.isDirectory();
-			final String path = currentFileHeader.getFileName();
-			final TreeNode currentNode = new TreeNode(currentFileHeader, isDirectory, path);
+			final TreeNode currentNode = new TreeNode(currentFileHeader);
 			TreeNode validParent = this.findParent(previousNode, currentNode);
 			if (validParent == null) {
 				validParent = rootNode;
