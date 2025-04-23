@@ -1,12 +1,11 @@
 package joorei.zip4j.tree;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import joorei.zip4j.tree.TreeBuilder;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
@@ -66,30 +65,32 @@ public class DirectoryFlagTreeBuilderTest {
 	 * Check for an exception when providing {@link FileHeader} directory with
 	 * <code>null</code> name.
 	 */
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void testCreateTreeFromFileHeadersWithZip_nullFileHeaderDirectoryName() throws ZipException {
-		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
-		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
-		final FileHeader fileHeader = fileHeaders.get(1);
-		assertTrue(fileHeader.isDirectory());
-		fileHeader.setFileName(null);
-		TREE_BUILDER.createTreeFromUnsorted(fileHeaders);
-		fail();
+		assertThrows(NullPointerException.class, () -> {
+			final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
+			final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
+			final FileHeader fileHeader = fileHeaders.get(1);
+			assertTrue(fileHeader.isDirectory());
+			fileHeader.setFileName(null);
+			TREE_BUILDER.createTreeFromUnsorted(fileHeaders);
+		});
 	}
 
 	/**
 	 * Check for an exception when providing {@link FileHeader} with
 	 * <code>null</code> name.
 	 */
-	@Test(expected = NullPointerException.class)
+	@Test
 	public void testCreateTreeFromFileHeadersWithZip_nullFileHeaderName() throws ZipException {
-		final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
-		final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
-		final FileHeader fileHeader = fileHeaders.get(0);
-		assertFalse(fileHeader.isDirectory());
-		fileHeader.setFileName(null);
-		TREE_BUILDER.createTreeFromUnsorted(fileHeaders);
-		fail();
+		assertThrows(NullPointerException.class, () -> {
+			final ZipFile zipFile = new ZipFile(ZipTestFileCreator.ARCHIVE_WITH_SLASHED_FILE_AND_DIR_NAMES);
+			final List<FileHeader> fileHeaders = zipFile.getFileHeaders();
+			final FileHeader fileHeader = fileHeaders.get(0);
+			assertFalse(fileHeader.isDirectory());
+			fileHeader.setFileName(null);
+			TREE_BUILDER.createTreeFromUnsorted(fileHeaders);
+		});
 	}
 
 	protected static void checkAssumption(final FileHeader fileHeader, final boolean isDir, final String name) {

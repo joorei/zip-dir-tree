@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import org.codeturnery.tree.TreeNodeInterface;
+
 import net.lingala.zip4j.model.FileHeader;
 
 /**

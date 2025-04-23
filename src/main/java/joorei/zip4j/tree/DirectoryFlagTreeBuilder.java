@@ -4,7 +4,7 @@ import net.lingala.zip4j.model.FileHeader;
 import net.lingala.zip4j.util.InternalZipConstants;
 
 /**
- * <strong>tl;dr:</strong> This class will generate a valid directory structure
+ * <strong>tl;dr:</strong> This class will generate a valid directory structure,
  * even if the basenames of the original files or directories contain slash
  * characters as long as 1) each directory and each file is backed by a
  * {@link FileHeader} and 2) these {@link FileHeader}s have their directory flag
@@ -53,7 +53,8 @@ public class DirectoryFlagTreeBuilder extends PathSeparatorTreeBuilder {
 	 * {@link FileHeader}s (see class description).
 	 */
 	@Override
-	public FileHeaderTreeNode addAsChild(final FileHeaderTreeNode parentNode, final FileHeaderTreeNode childNode) {
+	public FileHeaderTreeNode addAsChild(final FileHeaderTreeNode parentNode, final FileHeaderTreeNode childNode)
+			throws NullPointerException {
 		parentNode.addChild(childNode);
 		childNode.setParent(parentNode);
 		return childNode;

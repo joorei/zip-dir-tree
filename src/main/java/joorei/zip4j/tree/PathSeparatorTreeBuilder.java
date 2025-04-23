@@ -3,6 +3,8 @@ package joorei.zip4j.tree;
 import java.util.Comparator;
 import java.util.List;
 
+import org.codeturnery.tree.TreeBuilder;
+
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.FileHeader;
 import net.lingala.zip4j.util.InternalZipConstants;
@@ -10,7 +12,7 @@ import net.lingala.zip4j.util.InternalZipConstants;
 /**
  * ZIP files do not have a concept of a hierarchy of entries. Instead every
  * entry can be identified by a string identifier unique in the ZIP file. To
- * keep the directory hierarchy informations when creating a ZIP archive from
+ * keep the directory hierarchy information when creating a ZIP archive from
  * file system folders, forward slashes are used to separate directory names in
  * the identifier to denote the path of a file archived in the ZIP archive.
  * <p>
@@ -78,7 +80,8 @@ public class PathSeparatorTreeBuilder extends TreeBuilder<FileHeader, FileHeader
 	 * {@link FileHeaderTreeNode}s.
 	 */
 	@Override
-	public FileHeaderTreeNode addAsChild(final FileHeaderTreeNode parentNode, final FileHeaderTreeNode childNode) {
+	public FileHeaderTreeNode addAsChild(final FileHeaderTreeNode parentNode, final FileHeaderTreeNode childNode)
+			throws NullPointerException {
 		FileHeaderTreeNode currentChild = childNode;
 		// get the path of the childNode without the stuff that is already in the
 		// parentNode and re-add a trailing slash
